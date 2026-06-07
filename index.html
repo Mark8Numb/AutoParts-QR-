@@ -27,7 +27,6 @@
       margin: 0 auto;
     }
 
-    /* карточки */
     .card {
       background: rgba(18, 25, 45, 0.7);
       backdrop-filter: blur(12px);
@@ -86,6 +85,13 @@
     button.primary:hover {
       background: #1e5ad6;
       transform: scale(0.97);
+    }
+
+    button.danger {
+      background: #b91c1c;
+    }
+    button.danger:hover {
+      background: #8b1515;
     }
 
     input, textarea {
@@ -187,6 +193,73 @@
       padding: 4px 12px;
       font-size: 12px;
     }
+
+    /* модальное окно */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.8);
+      backdrop-filter: blur(10px);
+      z-index: 1000;
+      justify-content: center;
+      align-items: center;
+    }
+    .modal-content {
+      background: #0e1428dd;
+      border-radius: 48px;
+      max-width: 700px;
+      width: 90%;
+      max-height: 85vh;
+      overflow-y: auto;
+      padding: 24px;
+      border: 1px solid #2b6ef0;
+    }
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    .close-modal {
+      font-size: 28px;
+      cursor: pointer;
+    }
+    .sort-select {
+      background: #1e2a47;
+      padding: 8px 16px;
+      border-radius: 28px;
+      border: none;
+      color: white;
+    }
+    .journal-note {
+      background: #111827;
+      border-radius: 24px;
+      padding: 12px;
+      margin-bottom: 12px;
+    }
+    .journal-buttons {
+      display: flex;
+      gap: 8px;
+      margin-top: 8px;
+    }
+    .small-btn {
+      padding: 6px 12px;
+      font-size: 12px;
+    }
+    .search-history {
+      margin-top: 24px;
+      border-top: 1px solid #2a3655;
+      padding-top: 16px;
+    }
+    .history-item {
+      background: #0a1020;
+      border-radius: 20px;
+      padding: 8px 12px;
+      margin-bottom: 8px;
+      font-size: 13px;
+    }
   </style>
 </head>
 <body>
@@ -200,21 +273,50 @@
       <button id="demoQrBtn">🔍 Демо-деталь</button>
     </div>
 
-    <!-- Результат поиска по QR -->
     <div id="partInfo" style="margin-top: 20px;"></div>
   </div>
 
-  <!-- Голосовые заметки -->
   <div class="card">
     <div class="flex-row" style="justify-content: space-between;">
       <h3>🎙️ Голосовые заметки</h3>
-      <span class="badge">→ текст</span>
+      <button id="openJournalBtn" style="background:#2b6ef0;">📓 Журнал Водителя</button>
     </div>
     <div class="voice-notes" id="notesList">
       <div style="color:#6c7a9e; text-align:center; padding:20px;">Нет заметок. Нажмите микрофон</div>
     </div>
     <button id="startVoiceBtn" class="mic-btn">🎤 Записать заметку (голос → текст)</button>
-    <p style="font-size:12px; color:#5f7393; margin-top:12px;">*После записи текст появится в виде заметки. Нажмите ✅ чтобы отметить выполненной.</p>
+    <div class="flex-row" style="margin-top: 12px;">
+      <input type="text" id="deleteWordInput" placeholder="Слово для удаления" style="flex:1;">
+      <button id="deleteByWordBtn" class="danger small-btn">🗑️ Удалить по слову</button>
+      <button id="fullResetBtn" class="danger small-btn">⚠️ Полный сброс</button>
+    </div>
+  </div>
+</div>
+
+<!-- Модальное окно Журнал водителя -->
+<div id="journalModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2>📘 Журнал Водителя</h2>
+      <span class="close-modal">&times;</span>
+    </div>
+    <div class="flex-row" style="justify-content: space-between; margin-bottom: 16px;">
+      <select id="sortSelect" class="sort-select">
+        <option value="date_desc">📅 Новые сначала</option>
+        <option value="date_asc">📅 Старые сначала</option>
+        <option value="text_asc">🔤 А-Я</option>
+        <option value="text_desc">🔤 Я-А</option>
+        <option value="completed_first">✅ Выполненные сверху</option>
+        <option value="pending_first">⏳ Невыполненные сверху</option>
+      </select>
+      <button id="exportDataBtn" class="primary small-btn">💾 Экспорт в файл</button>
+    </div>
+    <div id="fullNotesList"></div>
+    <div class="search-history">
+      <h4>📜 История поисков деталей</h4>
+      <div id="searchHistoryList"></div>
+      <button id="clearHistoryBtn" class="small-btn" style="margin-top: 8px;">🧹 Очистить историю</button>
+    </div>
   </div>
 </div>
 
