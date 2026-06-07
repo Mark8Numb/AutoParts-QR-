@@ -1,21 +1,4 @@
-const CACHE_NAME = "autoqr-v1";
-const urlsToCache = [
-  "./",
-  "./index.html",
-  "./app.js",
-  "./manifest.json"
-];
-
-self.addEventListener("install", event => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then(cache => cache.addAll(urlsToCache))
-  );
-});
-
-self.addEventListener("fetch", event => {
-  event.respondWith(
-    caches.match(event.request).then(response => {
-      return response || fetch(event.request);
-    })
-  );
-});
+const CACHE_NAME = "autoqr-v3";
+const urls = ["./", "./index.html", "./app.js", "./manifest.json"];
+self.addEventListener("install", e => e.waitUntil(caches.open(CACHE_NAME).then(c => c.addAll(urls))));
+self.addEventListener("fetch", e => e.respondWith(caches.match(e.request).then(r => r || fetch(e.request))));
