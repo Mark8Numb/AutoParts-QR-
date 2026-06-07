@@ -33,9 +33,17 @@ function loadAll() {
   if (sortSelect) sortSelect.value = currentSort;
 }
 
-// ==================== ДОБАВЛЕНИЕ ЗАМЕТКИ ====================
+// ==================== ДОБАВЛЕНИЕ ЗАМЕТКИ (ОДНА ЗАМЕТКА = ОДИН ВЫЗОВ) ====================
 function addNote(text, hidden = false) {
-  if (!text.trim()) return;
+  if (!text || !text.trim()) return;
+  
+  // Проверка на дубликат в течение 1 секунды (защита от случайных дублей)
+  const lastNote = notes[0];
+  if (lastNote && lastNote.text === text.trim() && (Date.now() - lastNote.id) < 1000) {
+    console.log("Дубль заблокирован");
+    return;
+  }
+  
   notes.unshift({
     id: Date.now(),
     text: text.trim(),
@@ -45,10 +53,10 @@ function addNote(text, hidden = false) {
   });
   saveAll();
   renderNotes();
-  if (document.getElementById("journalModal").style.display === "flex") renderFullNotes();
+  if (isJournalOpen()) renderFullNotes();
 }
 
-// ==================== ОТРИСОВКА ГЛАВНОГО ЭКРАНА (только НЕ скрытые) ====================
+// ==================== ОТРИСОВКА ГЛАВНОГО ЭКРАНА ====================
 function renderNotes() {
   const container = document.getElementById("notesList");
   const visibleNotes = notes.filter(n => !n.hidden);
@@ -62,17 +70,23 @@ function renderNotes() {
       <button class="check-btn ${note.completed ? 'completed' : ''}" data-id="${note.id}">${note.completed ? '✓' : '○'}</button>
     </div>
   `).join('');
+  
   document.querySelectorAll('.check-btn').forEach(btn => {
     btn.addEventListener('click', (e) => {
       const id = parseInt(btn.dataset.id);
       const note = notes.find(n => n.id === id);
-      if (note) { note.completed = !note.completed; saveAll(); renderNotes(); if (isJournalOpen()) renderFullNotes(); }
+      if (note) { 
+        note.completed = !note.completed; 
+        saveAll(); 
+        renderNotes(); 
+        if (isJournalOpen()) renderFullNotes(); 
+      }
       e.stopPropagation();
     });
   });
 }
 
-// ==================== ЖУРНАЛ ВОДИТЕЛЯ (все заметки) ====================
+// ==================== ЖУРНАЛ ВОДИТЕЛЯ ====================
 function renderFullNotes() {
   let filtered = [...notes];
   if (currentSort === "date_desc") filtered.sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
@@ -83,7 +97,11 @@ function renderFullNotes() {
   else if (currentSort === "pending_first") filtered.sort((a,b) => a.completed - b.completed);
 
   const container = document.getElementById("fullNotesList");
-  if (filtered.length === 0) { container.innerHTML = "<div style='padding:20px;text-align:center'>Нет заметок</div>"; return; }
+  if (filtered.length === 0) { 
+    container.innerHTML = "<div style='padding:20px;text-align:center'>Нет заметок</div>"; 
+    return; 
+  }
+  
   container.innerHTML = filtered.map(note => `
     <div class="journal-item" style="opacity: ${note.hidden ? 0.6 : 1}">
       <div><strong>${escapeHtml(note.text)}</strong> ${note.hidden ? "(скрыта)" : ""}</div>
@@ -97,20 +115,37 @@ function renderFullNotes() {
   `).join('');
 
   document.querySelectorAll('.complete-journal').forEach(btn => {
-    btn.addEventListener('click', (e) => { const id = parseInt(btn.dataset.id); const n = notes.find(n=>n.id===id); if(n){ n.completed = !n.completed; saveAll(); renderNotes(); renderFullNotes(); } });
+    btn.addEventListener('click', (e) => { 
+      const id = parseInt(btn.dataset.id); 
+      const n = notes.find(n=>n.id===id); 
+      if(n){ n.completed = !n.completed; saveAll(); renderNotes(); renderFullNotes(); } 
+    });
   });
   document.querySelectorAll('.hide-journal').forEach(btn => {
-    btn.addEventListener('click', (e) => { const id = parseInt(btn.dataset.id); const n = notes.find(n=>n.id===id); if(n){ n.hidden = !n.hidden; saveAll(); renderNotes(); renderFullNotes(); } });
+    btn.addEventListener('click', (e) => { 
+      const id = parseInt(btn.dataset.id); 
+      const n = notes.find(n=>n.id===id); 
+      if(n){ n.hidden = !n.hidden; saveAll(); renderNotes(); renderFullNotes(); } 
+    });
   });
   document.querySelectorAll('.delete-journal').forEach(btn => {
-    btn.addEventListener('click', (e) => { const id = parseInt(btn.dataset.id); notes = notes.filter(n=>n.id!==id); saveAll(); renderNotes(); renderFullNotes(); });
+    btn.addEventListener('click', (e) => { 
+      const id = parseInt(btn.dataset.id); 
+      notes = notes.filter(n=>n.id!==id); 
+      saveAll(); 
+      renderNotes(); 
+      renderFullNotes(); 
+    });
   });
 }
 
 function renderHistory() {
   const container = document.getElementById("searchHistoryList");
   if (!container) return;
-  if (searchHistory.length === 0) { container.innerHTML = "<div style='padding:8px; color:#8e9bb5'>История пуста</div>"; return; }
+  if (searchHistory.length === 0) { 
+    container.innerHTML = "<div style='padding:8px; color:#8e9bb5'>История пуста</div>"; 
+    return; 
+  }
   container.innerHTML = searchHistory.slice().reverse().map(h => `
     <div class="history-item">
       🔍 <strong>${escapeHtml(h.qrCode)}</strong> → ${escapeHtml(h.partName)}<br>
@@ -191,52 +226,96 @@ function demoPart() {
   showPartInfo(randomKey);
 }
 
-// ==================== ГОЛОС ====================
+// ==================== ГОЛОС (ИСПРАВЛЕН — ОДНА ЗАМЕТКА ЗА РАЗ) ====================
 let recognition = null;
 let isRecording = false;
+let isProcessingVoice = false; // блокируем повторный вызов
 
 function initVoice() {
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
   if (!SpeechRecognition) {
     const btn = document.getElementById("startVoiceBtn");
-    btn.disabled = true;
-    btn.textContent = "❌ Голос не поддерживается";
+    if (btn) {
+      btn.disabled = true;
+      btn.textContent = "❌ Голос не поддерживается";
+    }
     return;
   }
   recognition = new SpeechRecognition();
   recognition.lang = "ru-RU";
-  recognition.continuous = false;
+  recognition.continuous = false;      // одна фраза = одна заметка
   recognition.interimResults = false;
+  recognition.maxAlternatives = 1;
+  
   recognition.onstart = () => {
     isRecording = true;
+    isProcessingVoice = false;
     const btn = document.getElementById("startVoiceBtn");
-    btn.classList.add("recording");
-    btn.textContent = "🎙️ Запись... говорите";
+    if (btn) {
+      btn.classList.add("recording");
+      btn.textContent = "🎙️ Говорите...";
+    }
   };
+  
   recognition.onend = () => {
     isRecording = false;
     const btn = document.getElementById("startVoiceBtn");
-    btn.classList.remove("recording");
-    btn.textContent = "🎤 Записать голосом → текст";
+    if (btn) {
+      btn.classList.remove("recording");
+      btn.textContent = "🎤 Записать голосом → текст";
+    }
   };
-  recognition.onerror = () => {
+  
+  recognition.onerror = (event) => {
+    console.error("Speech error:", event.error);
     isRecording = false;
+    isProcessingVoice = false;
     const btn = document.getElementById("startVoiceBtn");
-    btn.classList.remove("recording");
-    btn.textContent = "🎤 Ошибка, попробуйте снова";
-    setTimeout(() => { btn.textContent = "🎤 Записать голосом → текст"; }, 1500);
+    if (btn) {
+      btn.classList.remove("recording");
+      btn.textContent = "🎤 Ошибка, попробуйте снова";
+      setTimeout(() => {
+        if (btn.textContent === "🎤 Ошибка, попробуйте снова") {
+          btn.textContent = "🎤 Записать голосом → текст";
+        }
+      }, 1500);
+    }
   };
+  
   recognition.onresult = (event) => {
-    const text = event.results[0][0].transcript;
-    if (text.trim()) addNote(text);
-    else addNote("(неразборчиво)");
+    if (isProcessingVoice) return; // защита от дублей
+    isProcessingVoice = true;
+    
+    const lastResult = event.results[event.results.length - 1];
+    if (lastResult && lastResult[0]) {
+      const text = lastResult[0].transcript;
+      if (text && text.trim()) {
+        addNote(text);
+      }
+    }
+    
+    // Сбрасываем блокировку после небольшой задержки
+    setTimeout(() => {
+      isProcessingVoice = false;
+    }, 500);
   };
 }
 
 function startVoice() {
-  if (!recognition) return alert("Голосовой ввод недоступен");
-  if (isRecording) recognition.stop();
-  else recognition.start();
+  if (!recognition) {
+    alert("Голосовой ввод недоступен в этом браузере");
+    return;
+  }
+  if (isRecording) {
+    recognition.stop();
+  } else {
+    try {
+      recognition.start();
+    } catch(e) {
+      console.error("Ошибка запуска голоса:", e);
+      alert("Не удалось запустить микрофон. Проверьте разрешения.");
+    }
+  }
 }
 
 // ==================== УДАЛЕНИЕ, СБРОС, ЭКСПОРТ ====================
@@ -311,11 +390,13 @@ function escapeHtml(str) {
   });
 }
 
-// ==================== ЗАПУСК ====================
+// ==================== ЗАПУСК (БЕЗ АВТО-ЗАМЕТОК) ====================
 document.addEventListener("DOMContentLoaded", () => {
   loadAll();
   renderNotes();
   initVoice();
+  
+  // Кнопки
   document.getElementById("scanQrBtn").addEventListener("click", scanQR);
   document.getElementById("demoQrBtn").addEventListener("click", demoPart);
   document.getElementById("startVoiceBtn").addEventListener("click", startVoice);
@@ -326,8 +407,19 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("exportDataBtn").addEventListener("click", exportData);
   document.getElementById("clearHistoryBtn").addEventListener("click", clearHistoryOnly);
   document.getElementById("sortSelect").addEventListener("change", onSortChange);
-  window.addEventListener("click", (e) => { if (e.target === document.getElementById("journalModal")) closeJournal(); });
-  if (notes.length === 0) setTimeout(() => addNote("🔧 Пример: заменить масло через 5000 км"), 300);
+  
+  window.addEventListener("click", (e) => { 
+    if (e.target === document.getElementById("journalModal")) closeJournal(); 
+  });
+  
+  // НЕТ АВТОМАТИЧЕСКИХ ДЕМО-ЗАМЕТОК! Только если совсем пусто — одна подсказка
+  if (notes.length === 0) {
+    setTimeout(() => {
+      if (notes.length === 0) {
+        addNote("🔧 Нажмите микрофон, чтобы создать голосовую заметку");
+      }
+    }, 500);
+  }
 });
 
 // Service Worker
