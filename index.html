@@ -3,256 +3,72 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>AutoQR — Журнал водителя</title>
+  <title>AutoQR Pro — Журнал водителя</title>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0a0f1e">
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-      font-family: system-ui, -apple-system, 'Segoe UI', 'Inter', sans-serif;
-    }
-
-    body {
-      background: linear-gradient(145deg, #0a0f1e 0%, #0c1222 100%);
-      min-height: 100vh;
-      padding: 20px;
-      color: #eef3ff;
-    }
-
-    .container {
-      max-width: 650px;
-      margin: 0 auto;
-    }
-
-    .card {
-      background: rgba(18, 25, 45, 0.7);
-      backdrop-filter: blur(12px);
-      border-radius: 40px;
-      padding: 24px;
-      margin-bottom: 24px;
-      border: 1px solid rgba(72, 187, 255, 0.2);
-      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
-    }
-
-    h1 {
-      font-size: 28px;
-      font-weight: 700;
-      background: linear-gradient(135deg, #fff, #5bc0ff);
-      -webkit-background-clip: text;
-      background-clip: text;
-      color: transparent;
-      margin-bottom: 4px;
-    }
-
-    h3 {
-      font-size: 20px;
-      margin-bottom: 12px;
-    }
-
-    .sub {
-      color: #8e9bb5;
-      font-size: 13px;
-      margin-bottom: 20px;
-    }
-
-    .flex-row {
-      display: flex;
-      gap: 12px;
-      flex-wrap: wrap;
-      align-items: center;
-    }
-
-    button {
-      background: #1e2a47;
-      border: none;
-      padding: 10px 18px;
-      border-radius: 60px;
-      font-size: 14px;
-      font-weight: 500;
-      color: white;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    button.primary {
-      background: #2b6ef0;
-      box-shadow: 0 4px 12px rgba(43, 110, 240, 0.3);
-    }
-
-    button.primary:hover {
-      background: #1e5ad6;
-      transform: scale(0.97);
-    }
-
-    button.danger {
-      background: #b91c1c;
-    }
-
-    button.danger:hover {
-      background: #8b1515;
-    }
-
-    input, select {
-      background: #0e1428;
-      border: 1px solid #2a3655;
-      padding: 10px 16px;
-      border-radius: 60px;
-      color: white;
-      font-size: 14px;
-      outline: none;
-    }
-
-    input:focus, select:focus {
-      border-color: #2b6ef0;
-    }
-
-    .detail-card {
-      background: #0e1428cc;
-      border-radius: 28px;
-      padding: 16px;
-      margin-top: 16px;
-      border-left: 4px solid #2b6ef0;
-      font-size: 14px;
-    }
-
-    .notes-list {
-      margin-top: 16px;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      max-height: 400px;
-      overflow-y: auto;
-    }
-
-    .note-item {
-      background: #111827;
-      border-radius: 28px;
-      padding: 14px 16px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      border: 1px solid #1f2a44;
-    }
-
-    .note-item.completed {
-      opacity: 0.65;
-      text-decoration: line-through;
-      background: #0a1020;
-    }
-
-    .note-text {
-      flex: 1;
-      font-size: 15px;
-      word-break: break-word;
-    }
-
-    .check-btn {
-      width: 32px;
-      height: 32px;
-      border-radius: 30px;
-      background: none;
-      border: 2px solid #4c6a9e;
-      padding: 0;
-      justify-content: center;
-      font-size: 18px;
-    }
-
-    .check-btn.completed {
-      background: #2b6ef0;
-      border-color: #2b6ef0;
-    }
-
-    .mic-btn {
-      background: #d43f34;
-      margin-top: 8px;
-    }
-
-    .recording {
-      animation: pulse 1.2s infinite;
-      background: #b91c1c;
-    }
-
-    @keyframes pulse {
-      0% { box-shadow: 0 0 0 0 #ff5e4a80; }
-      70% { box-shadow: 0 0 0 8px #ff5e4a00; }
-      100% { box-shadow: 0 0 0 0 transparent; }
-    }
-
-    .modal {
-      display: none;
-      position: fixed;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-      background: rgba(0,0,0,0.85);
-      backdrop-filter: blur(12px);
-      z-index: 1000;
-      justify-content: center;
-      align-items: center;
-    }
-
-    .modal-content {
-      background: #0e1428ee;
-      border-radius: 48px;
-      max-width: 700px;
-      width: 92%;
-      max-height: 85vh;
-      overflow-y: auto;
-      padding: 24px;
-      border: 1px solid #2b6ef0;
-    }
-
-    .modal-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 20px;
-    }
-
-    .journal-item {
-      background: #111827;
-      border-radius: 24px;
-      padding: 14px;
-      margin-bottom: 12px;
-    }
-
-    .small-btn {
-      padding: 6px 12px;
-      font-size: 12px;
-    }
-
-    .history-item {
-      background: #0a1020;
-      border-radius: 20px;
-      padding: 8px 12px;
-      margin-bottom: 8px;
-      font-size: 13px;
-    }
-
-    hr {
-      border-color: #2a3655;
-      margin: 16px 0;
-    }
-
-    .empty-message {
-      text-align: center;
-      padding: 20px;
-      color: #6c7a9e;
-    }
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: system-ui, -apple-system, 'Inter', sans-serif; }
+    body { background: linear-gradient(145deg, #0a0f1e 0%, #0c1222 100%); min-height: 100vh; padding: 16px; color: #eef3ff; }
+    .container { max-width: 600px; margin: 0 auto; }
+    .card { background: rgba(18, 25, 45, 0.7); backdrop-filter: blur(12px); border-radius: 32px; padding: 20px; margin-bottom: 20px; border: 1px solid rgba(72, 187, 255, 0.2); }
+    h1 { font-size: 28px; font-weight: 700; background: linear-gradient(135deg, #fff, #5bc0ff); -webkit-background-clip: text; background-clip: text; color: transparent; margin-bottom: 4px; }
+    .flex-row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+    button { background: #1e2a47; border: none; padding: 12px 20px; border-radius: 60px; font-size: 14px; font-weight: 500; color: white; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; gap: 8px; }
+    button.primary { background: #2b6ef0; box-shadow: 0 4px 12px rgba(43,110,240,0.3); }
+    button.primary:hover { background: #1e5ad6; transform: scale(0.97); }
+    button.danger { background: #b91c1c; }
+    button.danger:hover { background: #8b1515; }
+    button.success { background: #10b981; }
+    input, select { background: #0e1428; border: 1px solid #2a3655; padding: 12px 16px; border-radius: 60px; color: white; font-size: 14px; outline: none; }
+    input:focus, select:focus { border-color: #2b6ef0; }
+    
+    /* Сканер QR */
+    .scanner-container { position: relative; width: 100%; border-radius: 24px; overflow: hidden; background: #000; margin-top: 16px; display: none; }
+    .scanner-container.active { display: block; }
+    #scannerVideo { width: 100%; max-height: 400px; object-fit: cover; }
+    .scanner-overlay { position: absolute; top: 0; left: 0; right: 0; bottom: 0; border: 2px solid #2b6ef0; box-shadow: 0 0 0 9999px rgba(0,0,0,0.5); margin: 20px; border-radius: 20px; pointer-events: none; }
+    .scan-result { margin-top: 12px; padding: 12px; background: #0e1428cc; border-radius: 20px; }
+    
+    .detail-card { background: #0e1428cc; border-radius: 24px; padding: 16px; margin-top: 16px; border-left: 4px solid #2b6ef0; }
+    .notes-list { margin-top: 16px; display: flex; flex-direction: column; gap: 10px; max-height: 350px; overflow-y: auto; }
+    .note-item { background: #111827; border-radius: 24px; padding: 14px 16px; display: flex; align-items: center; gap: 12px; border: 1px solid #1f2a44; }
+    .note-item.completed { opacity: 0.6; text-decoration: line-through; background: #0a1020; }
+    .note-text { flex: 1; font-size: 14px; word-break: break-word; }
+    .check-btn { width: 32px; height: 32px; border-radius: 30px; background: none; border: 2px solid #4c6a9e; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+    .check-btn.completed { background: #2b6ef0; border-color: #2b6ef0; }
+    .mic-btn { background: #d43f34; width: 100%; justify-content: center; }
+    .mic-btn.recording { animation: pulse 1.2s infinite; background: #b91c1c; }
+    @keyframes pulse { 0% { box-shadow: 0 0 0 0 #ff5e4a80; } 70% { box-shadow: 0 0 0 8px #ff5e4a00; } 100% { box-shadow: 0 0 0 0 transparent; } }
+    
+    .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(12px); z-index: 1000; justify-content: center; align-items: center; }
+    .modal-content { background: #0e1428ee; border-radius: 40px; max-width: 700px; width: 92%; max-height: 85vh; overflow-y: auto; padding: 20px; border: 1px solid #2b6ef0; }
+    .journal-item { background: #111827; border-radius: 20px; padding: 14px; margin-bottom: 12px; }
+    .small-btn { padding: 6px 12px; font-size: 12px; }
+    .qr-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; margin-top: 12px; }
+    .qr-card { background: #111827; border-radius: 16px; padding: 12px; text-align: center; }
+    .qr-card canvas { margin: 8px auto; display: block; background: white; padding: 8px; border-radius: 12px; }
+    .empty-message { text-align: center; padding: 20px; color: #6c7a9e; }
+    .action-log { font-size: 11px; color: #5f7393; margin-top: 8px; max-height: 100px; overflow-y: auto; }
   </style>
 </head>
 <body>
 <div class="container">
-  <!-- QR блок -->
+  <!-- QR блок с КАСТОМНЫМ СКАНЕРОМ -->
   <div class="card">
-    <h1>🔧 AutoQR</h1>
-    <div class="sub">Сканируй QR → информация о детали</div>
-    <div class="flex-row">
-      <button id="scanQrBtn" class="primary">📷 Сканировать QR</button>
+    <h1>🔧 AutoQR Pro</h1>
+    <div class="flex-row" style="justify-content: space-between;">
+      <button id="openScannerBtn" class="primary">📷 Открыть сканер</button>
+      <button id="manualInputBtn">⌨️ Ввести код вручную</button>
       <button id="demoQrBtn">🔍 Демо-деталь</button>
     </div>
+    
+    <!-- Контейнер для сканера -->
+    <div id="scannerContainer" class="scanner-container">
+      <video id="scannerVideo" autoplay playsinline></video>
+      <div class="scanner-overlay"></div>
+      <button id="closeScannerBtn" style="margin: 12px auto; display: block; background: #b91c1c;">❌ Закрыть сканер</button>
+    </div>
+    
     <div id="partInfo"></div>
   </div>
 
@@ -260,394 +76,267 @@
   <div class="card">
     <div class="flex-row" style="justify-content: space-between;">
       <h3>🎙️ Заметки</h3>
-      <button id="openJournalBtn" class="primary" style="background:#2b6ef0;">📓 Журнал водителя</button>
+      <button id="openJournalBtn" class="primary">📓 Журнал водителя</button>
+      <button id="openQrGenBtn" style="background:#10b981;">🏷️ Мои QR</button>
     </div>
-    <div id="notesList" class="notes-list">
-      <div class="empty-message">📭 Нет заметок</div>
-    </div>
-    <button id="startVoiceBtn" class="mic-btn" style="margin-top: 16px; width: 100%; justify-content: center;">🎤 Записать голосом → текст</button>
+    <div id="notesList" class="notes-list"><div class="empty-message">📭 Нет заметок</div></div>
+    <button id="startVoiceBtn" class="mic-btn">🎤 Записать голосом → текст</button>
     <div class="flex-row" style="margin-top: 12px;">
       <input type="text" id="deleteWordInput" placeholder="Слово для удаления" style="flex:1;">
       <button id="deleteByWordBtn" class="danger small-btn">🗑️ Удалить по слову</button>
       <button id="fullResetBtn" class="danger small-btn">⚠️ Полный сброс</button>
     </div>
+    <div id="actionLog" class="action-log"></div>
   </div>
 </div>
 
 <!-- Модалка Журнал водителя -->
-<div id="journalModal" class="modal">
-  <div class="modal-content">
-    <div class="modal-header">
-      <h2>📘 Журнал водителя</h2>
-      <span class="close-modal" style="font-size:32px; cursor:pointer;">&times;</span>
-    </div>
-    <div class="flex-row" style="justify-content: space-between; margin-bottom: 16px;">
-      <select id="sortSelect">
-        <option value="date_desc">📅 Новые сначала</option>
-        <option value="date_asc">📅 Старые сначала</option>
-        <option value="text_asc">🔤 А-Я</option>
-        <option value="text_desc">🔤 Я-А</option>
-        <option value="completed_first">✅ Выполненные сверху</option>
-        <option value="pending_first">⏳ Невыполненные сверху</option>
-      </select>
-      <button id="exportDataBtn" class="primary small-btn">💾 Экспорт JSON</button>
-    </div>
-    <div id="fullNotesList"></div>
-    <hr>
-    <h4>📜 История поисков деталей</h4>
-    <div id="searchHistoryList"></div>
-    <button id="clearHistoryBtn" class="small-btn" style="margin-top:8px;">🧹 Очистить историю</button>
-  </div>
-</div>
+<div id="journalModal" class="modal"><div class="modal-content"><div class="flex-row" style="justify-content: space-between;"><h2>📘 Журнал водителя</h2><span class="close-journal" style="font-size:32px;cursor:pointer;">&times;</span></div>
+<div class="flex-row" style="justify-content: space-between; margin: 16px 0;"><select id="sortSelect"><option value="date_desc">📅 Новые сначала</option><option value="date_asc">📅 Старые сначала</option><option value="text_asc">🔤 А-Я</option><option value="text_desc">🔤 Я-А</option><option value="completed_first">✅ Выполненные сверху</option></select>
+<button id="exportDataBtn" class="primary small-btn">💾 Экспорт JSON</button></div><div id="fullNotesList"></div><hr><h4>📜 История поисков</h4><div id="searchHistoryList"></div><button id="clearHistoryBtn" class="small-btn">🧹 Очистить историю</button></div></div>
+
+<!-- Модалка Мои QR -->
+<div id="qrGenModal" class="modal"><div class="modal-content"><div class="flex-row" style="justify-content: space-between;"><h2>🏷️ Мои QR-коды деталей</h2><span class="close-qr" style="font-size:32px;cursor:pointer;">&times;</span></div>
+<p style="margin:12px 0">Нажми на QR, чтобы добавить информацию о детали</p><div id="qrCodesList" class="qr-grid"></div></div></div>
 
 <script>
-  // ==================== БАЗА ДЕТАЛЕЙ ====================
-  const partsDB = {
-    "BRAKE-PAD-TOYOTA": { name: "Колодки тормозные передние", compatible: "Toyota Camry/RAV4", sku: "BPF-8821", stock: "✅ в наличии" },
-    "OIL-FILTER-VW": { name: "Фильтр масляный", compatible: "VW Golf/Passat", sku: "MANN W712/92", stock: "📦 15 шт" },
-    "SPARK-BOSCH": { name: "Свечи зажигания Bosch", compatible: "BMW/Mini", sku: "FR7KPP33+", stock: "🔥 48 шт" },
-    "ALTERNATOR-MB": { name: "Генератор 150A", compatible: "Mercedes W204", sku: "GEN-150-MB", stock: "⏳ под заказ" }
-  };
+// ==================== БАЗА ДЕТАЛЕЙ ====================
+const partsDB = {
+  "BRAKE-PAD-TOYOTA": { name: "Колодки тормозные передние", compatible: "Toyota Camry/RAV4", sku: "BPF-8821", stock: "✅ в наличии", price: "2 890 ₽" },
+  "OIL-FILTER-VW": { name: "Фильтр масляный", compatible: "VW Golf/Passat", sku: "MANN W712/92", stock: "📦 15 шт", price: "890 ₽" },
+  "SPARK-BOSCH": { name: "Свечи зажигания Bosch", compatible: "BMW/Mini", sku: "FR7KPP33+", stock: "🔥 48 шт", price: "1 200 ₽/шт" },
+  "ALTERNATOR-MB": { name: "Генератор 150A", compatible: "Mercedes W204", sku: "GEN-150-MB", stock: "⏳ под заказ", price: "12 500 ₽" },
+  "AIR-FILTER": { name: "Воздушный фильтр", compatible: "Universal", sku: "AF-2024", stock: "✅ 32 шт", price: "750 ₽" }
+};
 
-  // ==================== ДАННЫЕ ====================
-  let notes = [];
-  let searchHistory = [];
-  let currentSort = "date_desc";
+let notes = [], searchHistory = [], actionLogs = [], currentSort = "date_desc";
+let currentStream = null;
 
-  // ==================== СОХРАНЕНИЕ / ЗАГРУЗКА ====================
-  function saveAll() {
-    localStorage.setItem("autoqr_notes", JSON.stringify(notes));
-    localStorage.setItem("autoqr_history", JSON.stringify(searchHistory));
-    localStorage.setItem("autoqr_sort", currentSort);
-    console.log("Сохранено:", notes.length, "заметок");
-  }
+// ==================== ЛОГГИРОВАНИЕ ====================
+function addLog(action, details) {
+  actionLogs.unshift({ time: new Date().toLocaleTimeString(), action, details });
+  if (actionLogs.length > 20) actionLogs.pop();
+  const logDiv = document.getElementById("actionLog");
+  if (logDiv) logDiv.innerHTML = actionLogs.slice(0,5).map(l => `🔹 ${l.time} — ${l.action}`).join('<br>');
+  saveAll();
+}
 
-  function loadAll() {
-    const savedNotes = localStorage.getItem("autoqr_notes");
-    if (savedNotes) {
-      notes = JSON.parse(savedNotes);
-      console.log("Загружено заметок:", notes.length);
-    } else {
-      notes = [];
-    }
+// ==================== СОХРАНЕНИЕ ====================
+function saveAll() {
+  localStorage.setItem("autoqr_notes", JSON.stringify(notes));
+  localStorage.setItem("autoqr_history", JSON.stringify(searchHistory));
+  localStorage.setItem("autoqr_sort", currentSort);
+  localStorage.setItem("autoqr_logs", JSON.stringify(actionLogs));
+}
 
-    const savedHistory = localStorage.getItem("autoqr_history");
-    if (savedHistory) searchHistory = JSON.parse(savedHistory);
-    else searchHistory = [];
-
-    const savedSort = localStorage.getItem("autoqr_sort");
-    if (savedSort) currentSort = savedSort;
+function loadAll() {
+  try {
+    notes = JSON.parse(localStorage.getItem("autoqr_notes")) || [];
+    searchHistory = JSON.parse(localStorage.getItem("autoqr_history")) || [];
+    actionLogs = JSON.parse(localStorage.getItem("autoqr_logs")) || [];
+    currentSort = localStorage.getItem("autoqr_sort") || "date_desc";
     const sortSelect = document.getElementById("sortSelect");
     if (sortSelect) sortSelect.value = currentSort;
-  }
+  } catch(e) {}
+  renderNotes();
+  const logDiv = document.getElementById("actionLog");
+  if (logDiv) logDiv.innerHTML = actionLogs.slice(0,5).map(l => `🔹 ${l.time} — ${l.action}`).join('<br>');
+}
 
-  // ==================== ДОБАВЛЕНИЕ ЗАМЕТКИ ====================
-  function addNote(text, hidden = false) {
-    if (!text || !text.trim()) return;
-    
-    const trimmedText = text.trim();
-    
-    // Защита от дублей в течение 1 секунды
-    const lastNote = notes[0];
-    if (lastNote && lastNote.text === trimmedText && (Date.now() - lastNote.id) < 1000) {
-      console.log("Дубль заблокирован");
-      return;
-    }
-    
-    const newNote = {
-      id: Date.now(),
-      text: trimmedText,
-      completed: false,
-      hidden: hidden,
-      createdAt: new Date().toISOString()
-    };
-    
-    notes.unshift(newNote);
-    saveAll();
-    renderNotes();
-    if (isJournalOpen()) renderFullNotes();
-    
-    console.log("Добавлена заметка:", trimmedText);
-  }
+// ==================== ЗАМЕТКИ ====================
+function addNote(text, hidden = false) {
+  if (!text?.trim()) return;
+  const trimmed = text.trim();
+  if (notes[0]?.text === trimmed && (Date.now() - notes[0].id) < 1000) return;
+  notes.unshift({ id: Date.now(), text: trimmed, completed: false, hidden, createdAt: new Date().toISOString() });
+  saveAll();
+  renderNotes();
+  addLog("➕ Добавлена заметка", trimmed.slice(0,30));
+  if (isJournalOpen()) renderFullNotes();
+}
 
-  // ==================== ОТРИСОВКА ГЛАВНОГО ЭКРАНА ====================
-  function renderNotes() {
-    const container = document.getElementById("notesList");
-    const visibleNotes = notes.filter(n => !n.hidden);
-    
-    if (visibleNotes.length === 0) {
-      container.innerHTML = `<div class="empty-message">📭 Нет заметок</div>`;
-      return;
-    }
-    
-    container.innerHTML = visibleNotes.map(note => `
-      <div class="note-item ${note.completed ? 'completed' : ''}" data-id="${note.id}">
-        <div class="note-text">${escapeHtml(note.text)}</div>
-        <button class="check-btn ${note.completed ? 'completed' : ''}" data-id="${note.id}">${note.completed ? '✓' : '○'}</button>
-      </div>
-    `).join('');
-    
-    document.querySelectorAll('.check-btn').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        const id = parseInt(btn.dataset.id);
-        const note = notes.find(n => n.id === id);
-        if (note) { 
-          note.completed = !note.completed; 
-          saveAll(); 
-          renderNotes(); 
-          if (isJournalOpen()) renderFullNotes(); 
-        }
-        e.stopPropagation();
-      });
+function renderNotes() {
+  const container = document.getElementById("notesList");
+  const visible = notes.filter(n => !n.hidden);
+  if (!visible.length) { container.innerHTML = `<div class="empty-message">📭 Нет заметок</div>`; return; }
+  container.innerHTML = visible.map(n => `<div class="note-item ${n.completed ? 'completed' : ''}" data-id="${n.id}"><div class="note-text">${escapeHtml(n.text)}</div><button class="check-btn ${n.completed ? 'completed' : ''}" data-id="${n.id}">${n.completed ? '✓' : '○'}</button></div>`).join('');
+  document.querySelectorAll('.check-btn').forEach(btn => btn.addEventListener('click', (e) => { const id = parseInt(btn.dataset.id); const n = notes.find(n=>n.id===id); if(n){ n.completed = !n.completed; saveAll(); renderNotes(); if(isJournalOpen()) renderFullNotes(); addLog(n.completed ? "✅ Выполнено" : "🔄 Возвращено", n.text.slice(0,30)); } e.stopPropagation(); }));
+}
+
+function deleteByWord() {
+  const word = document.getElementById("deleteWordInput")?.value.trim();
+  if (!word) return alert("Введите слово");
+  const before = notes.length;
+  notes = notes.filter(n => !n.text.toLowerCase().includes(word.toLowerCase()));
+  addLog("🗑️ Удаление по слову", `"${word}" (удалено ${before - notes.length})`);
+  saveAll(); renderNotes(); if(isJournalOpen()) renderFullNotes();
+}
+
+function fullReset() {
+  if(confirm("Удалить ВСЁ?")){ notes=[]; searchHistory=[]; actionLogs=[]; saveAll(); renderNotes(); if(isJournalOpen()){ renderFullNotes(); renderHistory(); } document.getElementById("partInfo").innerHTML=""; addLog("⚠️ Полный сброс", "Все данные удалены"); }
+}
+
+// ==================== QR СКАНЕР (РАБОЧАЯ ВЕРСИЯ) ====================
+async function startScanner() {
+  const container = document.getElementById("scannerContainer");
+  const video = document.getElementById("scannerVideo");
+  
+  if (currentStream) {
+    currentStream.getTracks().forEach(t => t.stop());
+    currentStream = null;
+  }
+  
+  container.classList.add("active");
+  
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ 
+      video: { facingMode: "environment", width: { ideal: 1280 }, height: { ideal: 720 } } 
     });
+    currentStream = stream;
+    video.srcObject = stream;
+    await video.play();
+    addLog("📷 Камера запущена", "Ожидание QR-кода");
+    scanLoop(video);
+  } catch(err) {
+    addLog("❌ Ошибка камеры", err.message);
+    alert("Нет доступа к камере. Используйте ручной ввод.");
+    container.classList.remove("active");
   }
+}
 
-  // ==================== ЖУРНАЛ ВОДИТЕЛЯ ====================
-  function renderFullNotes() {
-    let filtered = [...notes];
-    
-    if (currentSort === "date_desc") filtered.sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
-    else if (currentSort === "date_asc") filtered.sort((a,b) => new Date(a.createdAt) - new Date(b.createdAt));
-    else if (currentSort === "text_asc") filtered.sort((a,b) => a.text.localeCompare(b.text));
-    else if (currentSort === "text_desc") filtered.sort((a,b) => b.text.localeCompare(a.text));
-    else if (currentSort === "completed_first") filtered.sort((a,b) => b.completed - a.completed);
-    else if (currentSort === "pending_first") filtered.sort((a,b) => a.completed - b.completed);
-
-    const container = document.getElementById("fullNotesList");
-    if (filtered.length === 0) { 
-      container.innerHTML = "<div class='empty-message'>Нет заметок</div>"; 
-      return; 
-    }
-    
-    container.innerHTML = filtered.map(note => `
-      <div class="journal-item" style="opacity: ${note.hidden ? 0.6 : 1}">
-        <div><strong>${escapeHtml(note.text)}</strong> ${note.hidden ? "(скрыта)" : ""}</div>
-        <div style="font-size:11px; color:#8e9bb5;">${new Date(note.createdAt).toLocaleString()}</div>
-        <div class="flex-row" style="margin-top:8px;">
-          <button class="small-btn complete-journal" data-id="${note.id}">${note.completed ? "✅ Выполнена" : "◻️ Выполнить"}</button>
-          <button class="small-btn hide-journal" data-id="${note.id}">${note.hidden ? "👁️ Показать" : "🙈 Скрыть"}</button>
-          <button class="small-btn danger delete-journal" data-id="${note.id}">🗑️ Удалить</button>
-        </div>
-      </div>
-    `).join('');
-
-    document.querySelectorAll('.complete-journal').forEach(btn => {
-      btn.addEventListener('click', (e) => { 
-        const id = parseInt(btn.dataset.id); 
-        const n = notes.find(n=>n.id===id); 
-        if(n){ n.completed = !n.completed; saveAll(); renderNotes(); renderFullNotes(); } 
-      });
-    });
-    document.querySelectorAll('.hide-journal').forEach(btn => {
-      btn.addEventListener('click', (e) => { 
-        const id = parseInt(btn.dataset.id); 
-        const n = notes.find(n=>n.id===id); 
-        if(n){ n.hidden = !n.hidden; saveAll(); renderNotes(); renderFullNotes(); } 
-      });
-    });
-    document.querySelectorAll('.delete-journal').forEach(btn => {
-      btn.addEventListener('click', (e) => { 
-        const id = parseInt(btn.dataset.id); 
-        notes = notes.filter(n=>n.id!==id); 
-        saveAll(); 
-        renderNotes(); 
-        renderFullNotes(); 
-      });
-    });
-  }
-
-  function renderHistory() {
-    const container = document.getElementById("searchHistoryList");
-    if (!container) return;
-    if (searchHistory.length === 0) { 
-      container.innerHTML = "<div class='empty-message'>История пуста</div>"; 
-      return; 
-    }
-    container.innerHTML = searchHistory.slice().reverse().map(h => `
-      <div class="history-item">
-        🔍 <strong>${escapeHtml(h.qrCode)}</strong> → ${escapeHtml(h.partName)}<br>
-        <span style="font-size:10px;">${new Date(h.timestamp).toLocaleString()}</span>
-      </div>
-    `).join('');
-  }
-
-  function addToHistory(qr, partName) {
-    searchHistory.unshift({ qrCode: qr, partName: partName, timestamp: new Date().toISOString() });
-    if (searchHistory.length > 50) searchHistory.pop();
-    saveAll();
-    renderHistory();
-  }
-
-  // ==================== QR И ДЕТАЛИ ====================
-  function showPartInfo(qrData) {
-    const part = partsDB[qrData];
-    const infoDiv = document.getElementById("partInfo");
-    if (part) {
-      infoDiv.innerHTML = `<div class="detail-card"><strong>🔩 ${part.name}</strong><br>📌 ${part.sku}<br>🚗 ${part.compatible}<br>📦 ${part.stock}<br><span style="font-size:11px;">QR: ${qrData}</span></div>`;
-      addToHistory(qrData, part.name);
-    } else {
-      infoDiv.innerHTML = `<div class="detail-card" style="border-left-color:#d43f34;">❌ Деталь не найдена<br>Код: ${qrData}</div>`;
-      addToHistory(qrData, "Неизвестная деталь");
-    }
-  }
-
-  async function scanQR() {
-    if (!('BarcodeDetector' in window)) {
-      const manual = prompt("Введите код с QR:", "BRAKE-PAD-TOYOTA");
-      if (manual) showPartInfo(manual);
-      return;
-    }
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
-      const video = document.createElement('video');
-      video.srcObject = stream;
-      video.setAttribute("playsinline", "");
-      await video.play();
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
-      const detector = new BarcodeDetector({ formats: ['qr_code'] });
-      let scanning = true;
-      const interval = setInterval(async () => {
-        if (!scanning) return;
-        if (video.videoWidth > 0) {
-          canvas.width = video.videoWidth;
-          canvas.height = video.videoHeight;
-          ctx.drawImage(video, 0, 0);
-          const barcodes = await detector.detect(canvas);
+function scanLoop(video) {
+  const canvas = document.createElement("canvas");
+  const ctx = canvas.getContext("2d");
+  let scanning = true;
+  
+  const interval = setInterval(() => {
+    if (!scanning || !currentStream || video.paused || video.ended || video.readyState !== 4) return;
+    if (video.videoWidth > 0 && video.videoHeight > 0) {
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      
+      if (window.BarcodeDetector) {
+        const detector = new window.BarcodeDetector({ formats: ["qr_code"] });
+        detector.detect(imageData).then(barcodes => {
           if (barcodes.length > 0) {
-            clearInterval(interval);
             scanning = false;
-            stream.getTracks().forEach(t => t.stop());
-            video.remove();
+            clearInterval(interval);
+            stopScanner();
             showPartInfo(barcodes[0].rawValue);
+            addLog("✅ QR отсканирован", barcodes[0].rawValue);
           }
-        }
-      }, 300);
-      setTimeout(() => {
-        if (scanning) {
-          clearInterval(interval);
-          scanning = false;
-          stream.getTracks().forEach(t => t.stop());
-          video.remove();
-          document.getElementById("partInfo").innerHTML = `<div class="detail-card">⏱️ Время вышло, QR не найден</div>`;
-        }
-      }, 15000);
-    } catch(e) {
-      document.getElementById("partInfo").innerHTML = `<div class="detail-card">⚠️ Ошибка камеры: ${e.message}</div>`;
-    }
-  }
-
-  function demoPart() {
-    const keys = Object.keys(partsDB);
-    const randomKey = keys[Math.floor(Math.random() * keys.length)];
-    showPartInfo(randomKey);
-  }
-
-  // ==================== ГОЛОС ====================
-  let recognition = null;
-  let isRecording = false;
-
-  function initVoice() {
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SpeechRecognition) {
-      const btn = document.getElementById("startVoiceBtn");
-      if (btn) {
-        btn.disabled = true;
-        btn.textContent = "❌ Голос не поддерживается";
-      }
-      return;
-    }
-    recognition = new SpeechRecognition();
-    recognition.lang = "ru-RU";
-    recognition.continuous = false;
-    recognition.interimResults = false;
-    recognition.maxAlternatives = 1;
-    
-    recognition.onstart = () => {
-      isRecording = true;
-      const btn = document.getElementById("startVoiceBtn");
-      if (btn) {
-        btn.classList.add("recording");
-        btn.textContent = "🎙️ Говорите...";
-      }
-    };
-    
-    recognition.onend = () => {
-      isRecording = false;
-      const btn = document.getElementById("startVoiceBtn");
-      if (btn) {
-        btn.classList.remove("recording");
-        btn.textContent = "🎤 Записать голосом → текст";
-      }
-    };
-    
-    recognition.onerror = (event) => {
-      console.error("Speech error:", event.error);
-      isRecording = false;
-      const btn = document.getElementById("startVoiceBtn");
-      if (btn) {
-        btn.classList.remove("recording");
-        btn.textContent = "🎤 Ошибка, попробуйте снова";
-        setTimeout(() => {
-          if (btn.textContent === "🎤 Ошибка, попробуйте снова") {
-            btn.textContent = "🎤 Записать голосом → текст";
-          }
-        }, 1500);
-      }
-    };
-    
-    recognition.onresult = (event) => {
-      const lastResult = event.results[event.results.length - 1];
-      if (lastResult && lastResult[0]) {
-        const text = lastResult[0].transcript;
-        if (text && text.trim()) {
-          addNote(text);
-        }
-      }
-    };
-  }
-
-  function startVoice() {
-    if (!recognition) {
-      alert("Голосовой ввод недоступен в этом браузере");
-      return;
-    }
-    if (isRecording) {
-      recognition.stop();
-    } else {
-      try {
-        recognition.start();
-      } catch(e) {
-        console.error("Ошибка запуска голоса:", e);
-        alert("Не удалось запустить микрофон. Проверьте разрешения.");
+        }).catch(() => {});
       }
     }
-  }
+  }, 200);
+}
 
-  // ==================== УДАЛЕНИЕ, СБРОС, ЭКСПОРТ ====================
-  function deleteByWord() {
-    const word = document.getElementById("deleteWordInput").value.trim();
-    if (!word) return alert("Введите слово для удаления");
-    const before = notes.length;
-    notes = notes.filter(n => !n.text.toLowerCase().includes(word.toLowerCase()));
-    const after = notes.length;
-    saveAll();
-    renderNotes();
-    if (isJournalOpen()) renderFullNotes();
-    alert(`Удалено ${before - after} заметок`);
+function stopScanner() {
+  if (currentStream) {
+    currentStream.getTracks().forEach(t => t.stop());
+    currentStream = null;
   }
+  document.getElementById("scannerContainer").classList.remove("active");
+  document.getElementById("scannerVideo").srcObject = null;
+}
 
-  function fullReset() {
-    if (confirm("⚠️ Удалить ВСЕ заметки и историю поисков? Отменить нельзя.")) {
-      notes = [];
-      searchHistory = [];
-      saveAll();
-      renderNotes();
-      if (isJournalOpen()) { renderFullNotes(); renderHistory(); }
-      document.getElementById("partInfo").innerHTML = "";
-      alert("Все данные удалены");
+function manualInput() {
+  const code = prompt("Введите QR-код детали:", "BRAKE-PAD-TOYOTA");
+  if (code) showPartInfo(code);
+}
+
+function showPartInfo(qrData) {
+  const part = partsDB[qrData];
+  const infoDiv = document.getElementById("partInfo");
+  if (part) {
+    infoDiv.innerHTML = `<div class="detail-card"><strong>🔩 ${part.name}</strong><br>📌 ${part.sku}<br>🚗 ${part.compatible}<br>💰 ${part.price}<br>📦 ${part.stock}<br><span style="font-size:11px;">🔎 QR: ${qrData}</span></div>`;
+    addToHistory(qrData, part.name);
+    addLog("🔍 Найдена деталь", part.name);
+  } else {
+    infoDiv.innerHTML = `<div class="detail-card" style="border-left-color:#d43f34;">❌ Деталь не найдена<br>Код: ${qrData}<br><button id="addToNotesBtn" style="margin-top:8px;">📝 Добавить в заметки</button></div>`;
+    document.getElementById("addToNotesBtn")?.addEventListener("click", () => addNote(`Деталь не найдена: ${qrData}`));
+    addToHistory(qrData, "Неизвестная деталь");
+  }
+}
+
+function addToHistory(qr, name) {
+  searchHistory.unshift({ qrCode: qr, partName: name, timestamp: new Date().toISOString() });
+  if (searchHistory.length > 50) searchHistory.pop();
+  saveAll();
+  if (isJournalOpen()) renderHistory();
+}
+
+function demoPart() {
+  const keys = Object.keys(partsDB);
+  const randomKey = keys[Math.floor(Math.random() keys.length)];
+  showPartInfo(randomKey);
+}
+
+// ==================== ГОЛОС ====================
+let recognition = null, isRecording = false;
+
+function initVoice() {
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRecognition) { const btn = document.getElementById("startVoiceBtn"); if(btn){ btn.disabled=true; btn.textContent="❌ Голос не поддерживается"; } return; }
+  recognition = new SpeechRecognition();
+  recognition.lang = "ru-RU";
+  recognition.continuous = false;
+  recognition.interimResults = false;
+  recognition.onstart = () => { isRecording=true; const btn=document.getElementById("startVoiceBtn"); if(btn){ btn.classList.add("recording"); btn.textContent="🎙️ Говорите..."; } };
+  recognition.onend = () => { isRecording=false; const btn=document.getElementById("startVoiceBtn"); if(btn){ btn.classList.remove("recording"); btn.textContent="🎤 Записать голосом → текст"; } };
+  recognition.onerror = () => { isRecording=false; const btn=document.getElementById("startVoiceBtn"); if(btn){ btn.classList.remove("recording"); btn.textContent="🎤 Ошибка, попробуйте снова"; setTimeout(()=>{ if(btn.textContent==="🎤 Ошибка, попробуйте снова") btn.textContent="🎤 Записать голосом → текст"; },1500); } };
+  recognition.onresult = (event) => { const text = event.results[0][0].transcript; if(text?.trim()) addNote(text); };
+}
+
+function startVoice() {
+  if (!recognition) return alert("Голосовой ввод не доступен");
+  if (isRecording) recognition.stop();
+  else recognition.start();
+}
+
+// ==================== ГЕНЕРАЦИЯ QR (НОВАЯ ФИЧА) ====================
+function renderQrCodes() {
+  const container = document.getElementById("qrCodesList");
+  if (!container) return;
+  const parts = Object.keys(partsDB);
+  container.innerHTML = parts.map(key => {
+    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(key)}&size=120x120`;
+    return `<div class="qr-card"><canvas data-key="${key}" width="120" height="120"></canvas><div><strong>${partsDB[key].name}</strong></div><button class="small-btn select-part" data-key="${key}">🔍 Найти деталь</button></div>`;
+  }).join('');
+  
+  parts.forEach(key => {
+    const canvas = document.querySelector(`canvas[data-key="${key}"]`);
+    if (canvas) {
+      const img = new Image();
+      img.crossOrigin = "Anonymous";
+      img.src = `https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(key)}&size=120x120`;
+      img.onload = () => { canvas.getContext("2d").drawImage(img, 0, 0, 120, 120); };
     }
-  }
+  });
+  
+  document.querySelectorAll(".select-part").forEach(btn => {
+    btn.addEventListener("click", (e) => {
+      const key = btn.dataset.key;
+      showPartInfo(key);
+      closeQrModal();
+      addLog("🏷️ Выбран из QR-списка", partsDB[key]?.name);
+    });
+  });
+}
 
-  function exportData() {
-    const data = { exportDate: new Date
+// ==================== ЖУРНАЛ ====================
+function renderFullNotes() {
+  let filtered = [...notes];
+  if (currentSort === "date_desc") filtered.sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
+  else if (currentSort === "date_asc") filtered.sort((a,b) => new Date(a.createdAt) - new Date(b.createdAt));
+  else if (currentSort === "text_asc") filtered.sort((a,b) => a.text.localeCompare(b.text));
+  else if (currentSort === "text_desc") filtered.sort((a,b) => b.text.localeCompare(a.text));
+  else if (currentSort === "completed_first") filtered.sort((a,b) => b.completed - a.completed);
+  
+  const container = document.getElementById("fullNotesList");
+  if (!filtered.length) { container.innerHTML = "<div class='empty-message'>Нет заметок</div>"; return; }
+  container.innerHTML = filtered.map(n => `<div class="journal-item"><div><strong>${escapeHtml(n.text)}</strong> ${n.hidden ? "(скрыта)" : ""}</div><div style="font-size:11px;">${new Date(n.createdAt).toLocaleString()}</div><div class="flex-row" style="margin-top:8px;"><button class="small-btn complete-journal" data-id="${n.id}">${n.completed ? "✅ Выполнена" : "◻️ Выполнить"}</button><button class="small-btn hide-journal" data-id="${n.id}">${n.hidden ? "👁️ Показать" : "🙈 Скрыть"}</button><button class="small-btn danger delete-journal" data-id="${n.id}">🗑️ Удалить</button></div></div>`).join('');
+  document.querySelectorAll('.complete-journal').forEach(btn => btn.addEventListener('click',(e)=>{ const id=parseInt(btn.dataset.id); const n=notes.find(n=>n.id===id); if(n){ n.completed=!n.completed; saveAll(); renderNotes(); renderFullNotes(); } }));
+  document.querySelectorAll('.hide-journal').forEach(btn => btn.addEventListener('click',(e)=>{ const id=parseInt(btn.da
