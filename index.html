@@ -3,340 +3,691 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>AutoQR Pro — Журнал водителя</title>
+  <title>AutoQR — Сканер и заметки</title>
   <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#0a0f1e">
+  <meta name="theme-color" content="#1a1a2e">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <!-- Библиотека для сканера QR -->
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; font-family: system-ui, -apple-system, 'Inter', sans-serif; }
-    body { background: linear-gradient(145deg, #0a0f1e 0%, #0c1222 100%); min-height: 100vh; padding: 16px; color: #eef3ff; }
-    .container { max-width: 600px; margin: 0 auto; }
-    .card { background: rgba(18, 25, 45, 0.7); backdrop-filter: blur(12px); border-radius: 32px; padding: 20px; margin-bottom: 20px; border: 1px solid rgba(72, 187, 255, 0.2); }
-    h1 { font-size: 28px; font-weight: 700; background: linear-gradient(135deg, #fff, #5bc0ff); -webkit-background-clip: text; background-clip: text; color: transparent; margin-bottom: 4px; }
-    .flex-row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
-    button { background: #1e2a47; border: none; padding: 12px 20px; border-radius: 60px; font-size: 14px; font-weight: 500; color: white; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; gap: 8px; }
-    button.primary { background: #2b6ef0; box-shadow: 0 4px 12px rgba(43,110,240,0.3); }
-    button.primary:hover { background: #1e5ad6; transform: scale(0.97); }
-    button.danger { background: #b91c1c; }
-    button.danger:hover { background: #8b1515; }
-    button.success { background: #10b981; }
-    input, select { background: #0e1428; border: 1px solid #2a3655; padding: 12px 16px; border-radius: 60px; color: white; font-size: 14px; outline: none; }
-    input:focus, select:focus { border-color: #2b6ef0; }
-    
-    /* Сканер QR */
-    .scanner-container { position: relative; width: 100%; border-radius: 24px; overflow: hidden; background: #000; margin-top: 16px; display: none; }
-    .scanner-container.active { display: block; }
-    #scannerVideo { width: 100%; max-height: 400px; object-fit: cover; }
-    .scanner-overlay { position: absolute; top: 0; left: 0; right: 0; bottom: 0; border: 2px solid #2b6ef0; box-shadow: 0 0 0 9999px rgba(0,0,0,0.5); margin: 20px; border-radius: 20px; pointer-events: none; }
-    .scan-result { margin-top: 12px; padding: 12px; background: #0e1428cc; border-radius: 20px; }
-    
-    .detail-card { background: #0e1428cc; border-radius: 24px; padding: 16px; margin-top: 16px; border-left: 4px solid #2b6ef0; }
-    .notes-list { margin-top: 16px; display: flex; flex-direction: column; gap: 10px; max-height: 350px; overflow-y: auto; }
-    .note-item { background: #111827; border-radius: 24px; padding: 14px 16px; display: flex; align-items: center; gap: 12px; border: 1px solid #1f2a44; }
-    .note-item.completed { opacity: 0.6; text-decoration: line-through; background: #0a1020; }
-    .note-text { flex: 1; font-size: 14px; word-break: break-word; }
-    .check-btn { width: 32px; height: 32px; border-radius: 30px; background: none; border: 2px solid #4c6a9e; display: flex; align-items: center; justify-content: center; cursor: pointer; }
-    .check-btn.completed { background: #2b6ef0; border-color: #2b6ef0; }
-    .mic-btn { background: #d43f34; width: 100%; justify-content: center; }
-    .mic-btn.recording { animation: pulse 1.2s infinite; background: #b91c1c; }
-    @keyframes pulse { 0% { box-shadow: 0 0 0 0 #ff5e4a80; } 70% { box-shadow: 0 0 0 8px #ff5e4a00; } 100% { box-shadow: 0 0 0 0 transparent; } }
-    
-    .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(12px); z-index: 1000; justify-content: center; align-items: center; }
-    .modal-content { background: #0e1428ee; border-radius: 40px; max-width: 700px; width: 92%; max-height: 85vh; overflow-y: auto; padding: 20px; border: 1px solid #2b6ef0; }
-    .journal-item { background: #111827; border-radius: 20px; padding: 14px; margin-bottom: 12px; }
-    .small-btn { padding: 6px 12px; font-size: 12px; }
-    .qr-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; margin-top: 12px; }
-    .qr-card { background: #111827; border-radius: 16px; padding: 12px; text-align: center; }
-    .qr-card canvas { margin: 8px auto; display: block; background: white; padding: 8px; border-radius: 12px; }
-    .empty-message { text-align: center; padding: 20px; color: #6c7a9e; }
-    .action-log { font-size: 11px; color: #5f7393; margin-top: 8px; max-height: 100px; overflow-y: auto; }
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: system-ui, -apple-system, 'Inter', 'Segoe UI', sans-serif;
+    }
+
+    body {
+      background: #0f0f1a;
+      min-height: 100vh;
+      color: #ffffff;
+    }
+
+    /* Контейнер приложения */
+    .app {
+      max-width: 500px;
+      margin: 0 auto;
+      background: #1a1a2e;
+      min-height: 100vh;
+      box-shadow: 0 0 20px rgba(0,0,0,0.3);
+    }
+
+    /* Шапка */
+    .header {
+      background: linear-gradient(135deg, #16213e, #1a1a2e);
+      padding: 20px;
+      text-align: center;
+      border-bottom: 1px solid #2d3561;
+    }
+    .header h1 {
+      font-size: 24px;
+      background: linear-gradient(135deg, #fff, #5bc0ff);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+    .header p {
+      font-size: 12px;
+      color: #8e9bb5;
+      margin-top: 4px;
+    }
+
+    /* Навигация */
+    .nav {
+      display: flex;
+      background: #16213e;
+      border-bottom: 1px solid #2d3561;
+    }
+    .nav-btn {
+      flex: 1;
+      padding: 14px;
+      background: none;
+      border: none;
+      color: #8e9bb5;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .nav-btn.active {
+      color: #5bc0ff;
+      border-bottom: 2px solid #5bc0ff;
+      background: rgba(91, 192, 255, 0.1);
+    }
+
+    /* Контент */
+    .content {
+      padding: 20px;
+    }
+    .tab {
+      display: none;
+    }
+    .tab.active {
+      display: block;
+    }
+
+    /* Карточки */
+    .card {
+      background: #16213e;
+      border-radius: 20px;
+      padding: 20px;
+      margin-bottom: 16px;
+      border: 1px solid #2d3561;
+    }
+    .card-title {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* Кнопки */
+    .btn {
+      background: #2d3561;
+      border: none;
+      padding: 12px 20px;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 500;
+      color: white;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .btn-primary {
+      background: #5bc0ff;
+      color: #1a1a2e;
+    }
+    .btn-primary:hover {
+      background: #3a9fd9;
+    }
+    .btn-danger {
+      background: #dc2626;
+    }
+    .btn-danger:hover {
+      background: #b91c1c;
+    }
+    .btn-outline {
+      background: transparent;
+      border: 1px solid #2d3561;
+    }
+
+    /* Сканер */
+    .scanner-container {
+      background: #000;
+      border-radius: 16px;
+      overflow: hidden;
+      margin-bottom: 16px;
+    }
+    #qr-reader {
+      width: 100%;
+      border: none;
+    }
+    #qr-reader video {
+      width: 100%;
+      height: auto;
+    }
+    .scan-result {
+      background: #0f0f1a;
+      border-radius: 12px;
+      padding: 12px;
+      margin-top: 12px;
+    }
+
+    /* Список заметок */
+    .notes-list {
+      max-height: 400px;
+      overflow-y: auto;
+    }
+    .note-item {
+      background: #0f0f1a;
+      border-radius: 16px;
+      padding: 14px;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      border: 1px solid #2d3561;
+    }
+    .note-item.completed {
+      opacity: 0.6;
+      background: #0a0a12;
+    }
+    .note-text {
+      flex: 1;
+      font-size: 14px;
+      word-break: break-word;
+    }
+    .note-date {
+      font-size: 10px;
+      color: #6c7a9e;
+      margin-top: 4px;
+    }
+    .note-actions {
+      display: flex;
+      gap: 8px;
+    }
+    .icon-btn {
+      background: none;
+      border: none;
+      font-size: 20px;
+      cursor: pointer;
+      padding: 4px;
+    }
+
+    /* Микрофон */
+    .mic-btn {
+      width: 100%;
+      justify-content: center;
+      margin-top: 8px;
+    }
+    .mic-btn.recording {
+      background: #dc2626;
+      animation: pulse 1s infinite;
+    }
+    @keyframes pulse {
+      0% { opacity: 1; }
+      50% { opacity: 0.7; }
+      100% { opacity: 1; }
+    }
+
+    /* История */
+    .history-item {
+      background: #0f0f1a;
+      border-radius: 12px;
+      padding: 12px;
+      margin-bottom: 8px;
+      border-left: 3px solid #5bc0ff;
+    }
+    .history-code {
+      font-family: monospace;
+      font-size: 12px;
+      color: #5bc0ff;
+    }
+    .history-time {
+      font-size: 10px;
+      color: #6c7a9e;
+    }
+
+    /* Пустые состояния */
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: #6c7a9e;
+    }
+
+    /* Модальное окно */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.8);
+      z-index: 1000;
+      justify-content: center;
+      align-items: center;
+    }
+    .modal-content {
+      background: #16213e;
+      border-radius: 24px;
+      max-width: 350px;
+      width: 90%;
+      padding: 24px;
+      text-align: center;
+    }
+    .modal-buttons {
+      display: flex;
+      gap: 12px;
+      margin-top: 20px;
+    }
+    .modal-buttons button {
+      flex: 1;
+    }
+
+    /* Инпут */
+    input, textarea {
+      background: #0f0f1a;
+      border: 1px solid #2d3561;
+      padding: 12px;
+      border-radius: 12px;
+      color: white;
+      font-size: 14px;
+      width: 100%;
+      outline: none;
+    }
+    input:focus, textarea:focus {
+      border-color: #5bc0ff;
+    }
   </style>
 </head>
 <body>
-<div class="container">
-  <!-- QR блок с КАСТОМНЫМ СКАНЕРОМ -->
-  <div class="card">
-    <h1>🔧 AutoQR Pro</h1>
-    <div class="flex-row" style="justify-content: space-between;">
-      <button id="openScannerBtn" class="primary">📷 Открыть сканер</button>
-      <button id="manualInputBtn">⌨️ Ввести код вручную</button>
-      <button id="demoQrBtn">🔍 Демо-деталь</button>
-    </div>
-    
-    <!-- Контейнер для сканера -->
-    <div id="scannerContainer" class="scanner-container">
-      <video id="scannerVideo" autoplay playsinline></video>
-      <div class="scanner-overlay"></div>
-      <button id="closeScannerBtn" style="margin: 12px auto; display: block; background: #b91c1c;">❌ Закрыть сканер</button>
-    </div>
-    
-    <div id="partInfo"></div>
+<div class="app">
+  <div class="header">
+    <h1>🔧 AutoQR</h1>
+    <p>Сканер деталей + голосовые заметки</p>
   </div>
 
-  <!-- Заметки -->
-  <div class="card">
-    <div class="flex-row" style="justify-content: space-between;">
-      <h3>🎙️ Заметки</h3>
-      <button id="openJournalBtn" class="primary">📓 Журнал водителя</button>
-      <button id="openQrGenBtn" style="background:#10b981;">🏷️ Мои QR</button>
+  <div class="nav">
+    <button class="nav-btn active" data-tab="scan">📷 Сканер</button>
+    <button class="nav-btn" data-tab="notes">📝 Заметки</button>
+    <button class="nav-btn" data-tab="history">📜 История</button>
+  </div>
+
+  <div class="content">
+    <!-- Вкладка Сканер -->
+    <div id="tab-scan" class="tab active">
+      <div class="card">
+        <div class="card-title">📷 Сканирование QR</div>
+        <div id="qr-reader" style="width:100%"></div>
+        <div id="scan-result" class="scan-result" style="display:none"></div>
+        <div class="flex-row" style="display: flex; gap: 12px; margin-top: 12px;">
+          <button id="startScannerBtn" class="btn btn-primary">▶️ Запустить сканер</button>
+          <button id="stopScannerBtn" class="btn btn-outline">⏹️ Остановить</button>
+        </div>
+        <button id="manualInputBtn" class="btn btn-outline" style="width:100%; margin-top:8px;">⌨️ Ввести код вручную</button>
+      </div>
     </div>
-    <div id="notesList" class="notes-list"><div class="empty-message">📭 Нет заметок</div></div>
-    <button id="startVoiceBtn" class="mic-btn">🎤 Записать голосом → текст</button>
-    <div class="flex-row" style="margin-top: 12px;">
-      <input type="text" id="deleteWordInput" placeholder="Слово для удаления" style="flex:1;">
-      <button id="deleteByWordBtn" class="danger small-btn">🗑️ Удалить по слову</button>
-      <button id="fullResetBtn" class="danger small-btn">⚠️ Полный сброс</button>
+
+    <!-- Вкладка Заметки -->
+    <div id="tab-notes" class="tab">
+      <div class="card">
+        <div class="card-title">🎙️ Голосовые заметки</div>
+        <div class="notes-list" id="notesList">
+          <div class="empty-state">📭 Нет заметок</div>
+        </div>
+        <button id="voiceNoteBtn" class="btn btn-primary mic-btn">🎤 Записать голосом</button>
+        <div class="flex-row" style="display: flex; gap: 12px; margin-top: 12px;">
+          <input type="text" id="deleteWordInput" placeholder="Слово для удаления">
+          <button id="deleteByWordBtn" class="btn btn-danger">Удалить</button>
+        </div>
+        <button id="clearAllNotesBtn" class="btn btn-outline" style="width:100%; margin-top:8px;">🗑️ Очистить все заметки</button>
+      </div>
     </div>
-    <div id="actionLog" class="action-log"></div>
+
+    <!-- Вкладка История -->
+    <div id="tab-history" class="tab">
+      <div class="card">
+        <div class="card-title">📜 История поисков</div>
+        <div id="historyList">
+          <div class="empty-state">📭 Нет истории</div>
+        </div>
+        <button id="clearHistoryBtn" class="btn btn-outline" style="width:100%;">🧹 Очистить историю</button>
+        <button id="exportDataBtn" class="btn btn-primary" style="width:100%; margin-top:8px;">💾 Экспорт всех данных</button>
+      </div>
+    </div>
   </div>
 </div>
 
-<!-- Модалка Журнал водителя -->
-<div id="journalModal" class="modal"><div class="modal-content"><div class="flex-row" style="justify-content: space-between;"><h2>📘 Журнал водителя</h2><span class="close-journal" style="font-size:32px;cursor:pointer;">&times;</span></div>
-<div class="flex-row" style="justify-content: space-between; margin: 16px 0;"><select id="sortSelect"><option value="date_desc">📅 Новые сначала</option><option value="date_asc">📅 Старые сначала</option><option value="text_asc">🔤 А-Я</option><option value="text_desc">🔤 Я-А</option><option value="completed_first">✅ Выполненные сверху</option></select>
-<button id="exportDataBtn" class="primary small-btn">💾 Экспорт JSON</button></div><div id="fullNotesList"></div><hr><h4>📜 История поисков</h4><div id="searchHistoryList"></div><button id="clearHistoryBtn" class="small-btn">🧹 Очистить историю</button></div></div>
-
-<!-- Модалка Мои QR -->
-<div id="qrGenModal" class="modal"><div class="modal-content"><div class="flex-row" style="justify-content: space-between;"><h2>🏷️ Мои QR-коды деталей</h2><span class="close-qr" style="font-size:32px;cursor:pointer;">&times;</span></div>
-<p style="margin:12px 0">Нажми на QR, чтобы добавить информацию о детали</p><div id="qrCodesList" class="qr-grid"></div></div></div>
-
 <script>
-// ==================== БАЗА ДЕТАЛЕЙ ====================
-const partsDB = {
-  "BRAKE-PAD-TOYOTA": { name: "Колодки тормозные передние", compatible: "Toyota Camry/RAV4", sku: "BPF-8821", stock: "✅ в наличии", price: "2 890 ₽" },
-  "OIL-FILTER-VW": { name: "Фильтр масляный", compatible: "VW Golf/Passat", sku: "MANN W712/92", stock: "📦 15 шт", price: "890 ₽" },
-  "SPARK-BOSCH": { name: "Свечи зажигания Bosch", compatible: "BMW/Mini", sku: "FR7KPP33+", stock: "🔥 48 шт", price: "1 200 ₽/шт" },
-  "ALTERNATOR-MB": { name: "Генератор 150A", compatible: "Mercedes W204", sku: "GEN-150-MB", stock: "⏳ под заказ", price: "12 500 ₽" },
-  "AIR-FILTER": { name: "Воздушный фильтр", compatible: "Universal", sku: "AF-2024", stock: "✅ 32 шт", price: "750 ₽" }
-};
+  // ==================== БАЗА ДЕТАЛЕЙ ====================
+  const partsDB = {
+    "BRAKE-PAD-TOYOTA": { name: "Колодки тормозные передние", compatible: "Toyota Camry/RAV4", sku: "BPF-8821", stock: "✅ в наличии" },
+    "OIL-FILTER-VW": { name: "Фильтр масляный", compatible: "VW Golf/Passat", sku: "MANN W712/92", stock: "📦 15 шт" },
+    "SPARK-BOSCH": { name: "Свечи зажигания Bosch", compatible: "BMW/Mini", sku: "FR7KPP33+", stock: "🔥 48 шт" },
+    "ALTERNATOR-MB": { name: "Генератор 150A", compatible: "Mercedes W204", sku: "GEN-150-MB", stock: "⏳ под заказ" },
+    "AIR-FILTER": { name: "Воздушный фильтр", compatible: "Универсальный", sku: "AF-2024", stock: "✅ 32 шт" }
+  };
 
-let notes = [], searchHistory = [], actionLogs = [], currentSort = "date_desc";
-let currentStream = null;
+  // ==================== ДАННЫЕ ====================
+  let notes = [];        // { id, text, completed, createdAt }
+  let searchHistory = []; // { qrCode, partName, timestamp }
 
-// ==================== ЛОГГИРОВАНИЕ ====================
-function addLog(action, details) {
-  actionLogs.unshift({ time: new Date().toLocaleTimeString(), action, details });
-  if (actionLogs.length > 20) actionLogs.pop();
-  const logDiv = document.getElementById("actionLog");
-  if (logDiv) logDiv.innerHTML = actionLogs.slice(0,5).map(l => `🔹 ${l.time} — ${l.action}`).join('<br>');
-  saveAll();
-}
-
-// ==================== СОХРАНЕНИЕ ====================
-function saveAll() {
-  localStorage.setItem("autoqr_notes", JSON.stringify(notes));
-  localStorage.setItem("autoqr_history", JSON.stringify(searchHistory));
-  localStorage.setItem("autoqr_sort", currentSort);
-  localStorage.setItem("autoqr_logs", JSON.stringify(actionLogs));
-}
-
-function loadAll() {
-  try {
-    notes = JSON.parse(localStorage.getItem("autoqr_notes")) || [];
-    searchHistory = JSON.parse(localStorage.getItem("autoqr_history")) || [];
-    actionLogs = JSON.parse(localStorage.getItem("autoqr_logs")) || [];
-    currentSort = localStorage.getItem("autoqr_sort") || "date_desc";
-    const sortSelect = document.getElementById("sortSelect");
-    if (sortSelect) sortSelect.value = currentSort;
-  } catch(e) {}
-  renderNotes();
-  const logDiv = document.getElementById("actionLog");
-  if (logDiv) logDiv.innerHTML = actionLogs.slice(0,5).map(l => `🔹 ${l.time} — ${l.action}`).join('<br>');
-}
-
-// ==================== ЗАМЕТКИ ====================
-function addNote(text, hidden = false) {
-  if (!text?.trim()) return;
-  const trimmed = text.trim();
-  if (notes[0]?.text === trimmed && (Date.now() - notes[0].id) < 1000) return;
-  notes.unshift({ id: Date.now(), text: trimmed, completed: false, hidden, createdAt: new Date().toISOString() });
-  saveAll();
-  renderNotes();
-  addLog("➕ Добавлена заметка", trimmed.slice(0,30));
-  if (isJournalOpen()) renderFullNotes();
-}
-
-function renderNotes() {
-  const container = document.getElementById("notesList");
-  const visible = notes.filter(n => !n.hidden);
-  if (!visible.length) { container.innerHTML = `<div class="empty-message">📭 Нет заметок</div>`; return; }
-  container.innerHTML = visible.map(n => `<div class="note-item ${n.completed ? 'completed' : ''}" data-id="${n.id}"><div class="note-text">${escapeHtml(n.text)}</div><button class="check-btn ${n.completed ? 'completed' : ''}" data-id="${n.id}">${n.completed ? '✓' : '○'}</button></div>`).join('');
-  document.querySelectorAll('.check-btn').forEach(btn => btn.addEventListener('click', (e) => { const id = parseInt(btn.dataset.id); const n = notes.find(n=>n.id===id); if(n){ n.completed = !n.completed; saveAll(); renderNotes(); if(isJournalOpen()) renderFullNotes(); addLog(n.completed ? "✅ Выполнено" : "🔄 Возвращено", n.text.slice(0,30)); } e.stopPropagation(); }));
-}
-
-function deleteByWord() {
-  const word = document.getElementById("deleteWordInput")?.value.trim();
-  if (!word) return alert("Введите слово");
-  const before = notes.length;
-  notes = notes.filter(n => !n.text.toLowerCase().includes(word.toLowerCase()));
-  addLog("🗑️ Удаление по слову", `"${word}" (удалено ${before - notes.length})`);
-  saveAll(); renderNotes(); if(isJournalOpen()) renderFullNotes();
-}
-
-function fullReset() {
-  if(confirm("Удалить ВСЁ?")){ notes=[]; searchHistory=[]; actionLogs=[]; saveAll(); renderNotes(); if(isJournalOpen()){ renderFullNotes(); renderHistory(); } document.getElementById("partInfo").innerHTML=""; addLog("⚠️ Полный сброс", "Все данные удалены"); }
-}
-
-// ==================== QR СКАНЕР (РАБОЧАЯ ВЕРСИЯ) ====================
-async function startScanner() {
-  const container = document.getElementById("scannerContainer");
-  const video = document.getElementById("scannerVideo");
-  
-  if (currentStream) {
-    currentStream.getTracks().forEach(t => t.stop());
-    currentStream = null;
+  // ==================== ИНИЦИАЛИЗАЦИЯ ====================
+  function loadData() {
+    const savedNotes = localStorage.getItem("autoqr_notes");
+    if (savedNotes) notes = JSON.parse(savedNotes);
+    const savedHistory = localStorage.getItem("autoqr_history");
+    if (savedHistory) searchHistory = JSON.parse(savedHistory);
+    renderNotes();
+    renderHistory();
   }
-  
-  container.classList.add("active");
-  
-  try {
-    const stream = await navigator.mediaDevices.getUserMedia({ 
-      video: { facingMode: "environment", width: { ideal: 1280 }, height: { ideal: 720 } } 
+
+  function saveData() {
+    localStorage.setItem("autoqr_notes", JSON.stringify(notes));
+    localStorage.setItem("autoqr_history", JSON.stringify(searchHistory));
+  }
+
+  // ==================== ЗАМЕТКИ ====================
+  function addNote(text) {
+    if (!text?.trim()) return;
+    notes.unshift({
+      id: Date.now(),
+      text: text.trim(),
+      completed: false,
+      createdAt: new Date().toISOString()
     });
-    currentStream = stream;
-    video.srcObject = stream;
-    await video.play();
-    addLog("📷 Камера запущена", "Ожидание QR-кода");
-    scanLoop(video);
-  } catch(err) {
-    addLog("❌ Ошибка камеры", err.message);
-    alert("Нет доступа к камере. Используйте ручной ввод.");
-    container.classList.remove("active");
+    saveData();
+    renderNotes();
   }
-}
 
-function scanLoop(video) {
-  const canvas = document.createElement("canvas");
-  const ctx = canvas.getContext("2d");
-  let scanning = true;
-  
-  const interval = setInterval(() => {
-    if (!scanning || !currentStream || video.paused || video.ended || video.readyState !== 4) return;
-    if (video.videoWidth > 0 && video.videoHeight > 0) {
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-      
-      if (window.BarcodeDetector) {
-        const detector = new window.BarcodeDetector({ formats: ["qr_code"] });
-        detector.detect(imageData).then(barcodes => {
-          if (barcodes.length > 0) {
-            scanning = false;
-            clearInterval(interval);
-            stopScanner();
-            showPartInfo(barcodes[0].rawValue);
-            addLog("✅ QR отсканирован", barcodes[0].rawValue);
-          }
-        }).catch(() => {});
+  function toggleNote(id) {
+    const note = notes.find(n => n.id === id);
+    if (note) note.completed = !note.completed;
+    saveData();
+    renderNotes();
+  }
+
+  function deleteNote(id) {
+    notes = notes.filter(n => n.id !== id);
+    saveData();
+    renderNotes();
+  }
+
+  function deleteNotesByWord(word) {
+    if (!word.trim()) return;
+    const before = notes.length;
+    notes = notes.filter(n => !n.text.toLowerCase().includes(word.toLowerCase()));
+    saveData();
+    renderNotes();
+    if (before !== notes.length) showToast(`Удалено ${before - notes.length} заметок`);
+  }
+
+  function clearAllNotes() {
+    if (confirm("Удалить все заметки?")) {
+      notes = [];
+      saveData();
+      renderNotes();
+      showToast("Все заметки удалены");
+    }
+  }
+
+  function renderNotes() {
+    const container = document.getElementById("notesList");
+    if (!notes.length) {
+      container.innerHTML = '<div class="empty-state">📭 Нет заметок</div>';
+      return;
+    }
+    container.innerHTML = notes.map(n => `
+      <div class="note-item ${n.completed ? 'completed' : ''}">
+        <div style="flex:1">
+          <div class="note-text">${escapeHtml(n.text)}</div>
+          <div class="note-date">${formatDate(n.createdAt)}</div>
+        </div>
+        <div class="note-actions">
+          <button class="icon-btn" onclick="toggleNote(${n.id})">${n.completed ? '🔄' : '✅'}</button>
+          <button class="icon-btn" onclick="deleteNote(${n.id})">🗑️</button>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  // ==================== ИСТОРИЯ ====================
+  function addToHistory(qrCode, partName) {
+    searchHistory.unshift({
+      qrCode: qrCode,
+      partName: partName,
+      timestamp: new Date().toISOString()
+    });
+    if (searchHistory.length > 50) searchHistory.pop();
+    saveData();
+    renderHistory();
+  }
+
+  function renderHistory() {
+    const container = document.getElementById("historyList");
+    if (!searchHistory.length) {
+      container.innerHTML = '<div class="empty-state">📭 Нет истории</div>';
+      return;
+    }
+    container.innerHTML = searchHistory.map(h => `
+      <div class="history-item">
+        <div><strong>${escapeHtml(h.partName)}</strong></div>
+        <div class="history-code">📦 QR: ${escapeHtml(h.qrCode)}</div>
+        <div class="history-time">🕐 ${formatDate(h.timestamp)}</div>
+      </div>
+    `).join('');
+  }
+
+  function clearHistory() {
+    if (confirm("Очистить историю поисков?")) {
+      searchHistory = [];
+      saveData();
+      renderHistory();
+      showToast("История очищена");
+    }
+  }
+
+  // ==================== QR СКАНЕР (РАБОТАЕТ!) ====================
+  let html5QrCode = null;
+  let isScanning = false;
+
+  function startScanner() {
+    if (isScanning) {
+      showToast("Сканер уже работает");
+      return;
+    }
+    
+    const resultDiv = document.getElementById("scan-result");
+    resultDiv.style.display = "none";
+    resultDiv.innerHTML = "";
+    
+    html5QrCode = new Html5Qrcode("qr-reader");
+    
+    const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+    
+    html5QrCode.start({ facingMode: "environment" }, config, (decodedText) => {
+      // Успешное сканирование
+      if (isScanning) {
+        processScannedCode(decodedText);
+        stopScanner();
       }
-    }
-  }, 200);
-}
-
-function stopScanner() {
-  if (currentStream) {
-    currentStream.getTracks().forEach(t => t.stop());
-    currentStream = null;
-  }
-  document.getElementById("scannerContainer").classList.remove("active");
-  document.getElementById("scannerVideo").srcObject = null;
-}
-
-function manualInput() {
-  const code = prompt("Введите QR-код детали:", "BRAKE-PAD-TOYOTA");
-  if (code) showPartInfo(code);
-}
-
-function showPartInfo(qrData) {
-  const part = partsDB[qrData];
-  const infoDiv = document.getElementById("partInfo");
-  if (part) {
-    infoDiv.innerHTML = `<div class="detail-card"><strong>🔩 ${part.name}</strong><br>📌 ${part.sku}<br>🚗 ${part.compatible}<br>💰 ${part.price}<br>📦 ${part.stock}<br><span style="font-size:11px;">🔎 QR: ${qrData}</span></div>`;
-    addToHistory(qrData, part.name);
-    addLog("🔍 Найдена деталь", part.name);
-  } else {
-    infoDiv.innerHTML = `<div class="detail-card" style="border-left-color:#d43f34;">❌ Деталь не найдена<br>Код: ${qrData}<br><button id="addToNotesBtn" style="margin-top:8px;">📝 Добавить в заметки</button></div>`;
-    document.getElementById("addToNotesBtn")?.addEventListener("click", () => addNote(`Деталь не найдена: ${qrData}`));
-    addToHistory(qrData, "Неизвестная деталь");
-  }
-}
-
-function addToHistory(qr, name) {
-  searchHistory.unshift({ qrCode: qr, partName: name, timestamp: new Date().toISOString() });
-  if (searchHistory.length > 50) searchHistory.pop();
-  saveAll();
-  if (isJournalOpen()) renderHistory();
-}
-
-function demoPart() {
-  const keys = Object.keys(partsDB);
-  const randomKey = keys[Math.floor(Math.random() keys.length)];
-  showPartInfo(randomKey);
-}
-
-// ==================== ГОЛОС ====================
-let recognition = null, isRecording = false;
-
-function initVoice() {
-  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (!SpeechRecognition) { const btn = document.getElementById("startVoiceBtn"); if(btn){ btn.disabled=true; btn.textContent="❌ Голос не поддерживается"; } return; }
-  recognition = new SpeechRecognition();
-  recognition.lang = "ru-RU";
-  recognition.continuous = false;
-  recognition.interimResults = false;
-  recognition.onstart = () => { isRecording=true; const btn=document.getElementById("startVoiceBtn"); if(btn){ btn.classList.add("recording"); btn.textContent="🎙️ Говорите..."; } };
-  recognition.onend = () => { isRecording=false; const btn=document.getElementById("startVoiceBtn"); if(btn){ btn.classList.remove("recording"); btn.textContent="🎤 Записать голосом → текст"; } };
-  recognition.onerror = () => { isRecording=false; const btn=document.getElementById("startVoiceBtn"); if(btn){ btn.classList.remove("recording"); btn.textContent="🎤 Ошибка, попробуйте снова"; setTimeout(()=>{ if(btn.textContent==="🎤 Ошибка, попробуйте снова") btn.textContent="🎤 Записать голосом → текст"; },1500); } };
-  recognition.onresult = (event) => { const text = event.results[0][0].transcript; if(text?.trim()) addNote(text); };
-}
-
-function startVoice() {
-  if (!recognition) return alert("Голосовой ввод не доступен");
-  if (isRecording) recognition.stop();
-  else recognition.start();
-}
-
-// ==================== ГЕНЕРАЦИЯ QR (НОВАЯ ФИЧА) ====================
-function renderQrCodes() {
-  const container = document.getElementById("qrCodesList");
-  if (!container) return;
-  const parts = Object.keys(partsDB);
-  container.innerHTML = parts.map(key => {
-    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(key)}&size=120x120`;
-    return `<div class="qr-card"><canvas data-key="${key}" width="120" height="120"></canvas><div><strong>${partsDB[key].name}</strong></div><button class="small-btn select-part" data-key="${key}">🔍 Найти деталь</button></div>`;
-  }).join('');
-  
-  parts.forEach(key => {
-    const canvas = document.querySelector(`canvas[data-key="${key}"]`);
-    if (canvas) {
-      const img = new Image();
-      img.crossOrigin = "Anonymous";
-      img.src = `https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(key)}&size=120x120`;
-      img.onload = () => { canvas.getContext("2d").drawImage(img, 0, 0, 120, 120); };
-    }
-  });
-  
-  document.querySelectorAll(".select-part").forEach(btn => {
-    btn.addEventListener("click", (e) => {
-      const key = btn.dataset.key;
-      showPartInfo(key);
-      closeQrModal();
-      addLog("🏷️ Выбран из QR-списка", partsDB[key]?.name);
+    }, (errorMessage) => {
+      // Ошибки игнорируем — это нормально при сканировании
+      console.log(errorMessage);
+    }).then(() => {
+      isScanning = true;
+      showToast("Сканер запущен, наведите на QR-код");
+    }).catch((err) => {
+      console.error("Ошибка запуска сканера:", err);
+      showToast("Ошибка доступа к камере. Проверьте разрешения.");
     });
-  });
-}
+  }
 
-// ==================== ЖУРНАЛ ====================
-function renderFullNotes() {
-  let filtered = [...notes];
-  if (currentSort === "date_desc") filtered.sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
-  else if (currentSort === "date_asc") filtered.sort((a,b) => new Date(a.createdAt) - new Date(b.createdAt));
-  else if (currentSort === "text_asc") filtered.sort((a,b) => a.text.localeCompare(b.text));
-  else if (currentSort === "text_desc") filtered.sort((a,b) => b.text.localeCompare(a.text));
-  else if (currentSort === "completed_first") filtered.sort((a,b) => b.completed - a.completed);
-  
-  const container = document.getElementById("fullNotesList");
-  if (!filtered.length) { container.innerHTML = "<div class='empty-message'>Нет заметок</div>"; return; }
-  container.innerHTML = filtered.map(n => `<div class="journal-item"><div><strong>${escapeHtml(n.text)}</strong> ${n.hidden ? "(скрыта)" : ""}</div><div style="font-size:11px;">${new Date(n.createdAt).toLocaleString()}</div><div class="flex-row" style="margin-top:8px;"><button class="small-btn complete-journal" data-id="${n.id}">${n.completed ? "✅ Выполнена" : "◻️ Выполнить"}</button><button class="small-btn hide-journal" data-id="${n.id}">${n.hidden ? "👁️ Показать" : "🙈 Скрыть"}</button><button class="small-btn danger delete-journal" data-id="${n.id}">🗑️ Удалить</button></div></div>`).join('');
-  document.querySelectorAll('.complete-journal').forEach(btn => btn.addEventListener('click',(e)=>{ const id=parseInt(btn.dataset.id); const n=notes.find(n=>n.id===id); if(n){ n.completed=!n.completed; saveAll(); renderNotes(); renderFullNotes(); } }));
-  document.querySelectorAll('.hide-journal').forEach(btn => btn.addEventListener('click',(e)=>{ const id=parseInt(btn.da
+  function stopScanner() {
+    if (html5QrCode && isScanning) {
+      html5QrCode.stop().then(() => {
+        isScanning = false;
+        showToast("Сканер остановлен");
+      }).catch(() => {});
+    }
+  }
+
+  function processScannedCode(qrData) {
+    const resultDiv = document.getElementById("scan-result");
+    const part = partsDB[qrData];
+    
+    let html = '';
+    if (part) {
+      html = `
+        <div style="border-left: 3px solid #10b981; padding-left: 12px;">
+          <strong>🔩 ${part.name}</strong><br>
+          📌 ${part.sku}<br>
+          🚗 ${part.compatible}<br>
+          📦 ${part.stock}
+        </div>
+        <button id="addNoteFromScan" class="btn btn-outline" style="margin-top:12px; width:100%;">📝 Добавить в заметки</button>
+      `;
+      addToHistory(qrData, part.name);
+      showToast(`Найдено: ${part.name}`);
+    } else {
+      html = `
+        <div style="border-left: 3px solid #dc2626; padding-left: 12px;">
+          ⚠️ Деталь не найдена<br>
+          Код: ${qrData}
+        </div>
+        <button id="addNoteFromScan" class="btn btn-outline" style="margin-top:12px; width:100%;">📝 Добавить код в заметки</button>
+      `;
+      addToHistory(qrData, "Неизвестная деталь");
+    }
+    
+    resultDiv.innerHTML = html;
+    resultDiv.style.display = "block";
+    
+    document.getElementById("addNoteFromScan")?.addEventListener("click", () => {
+      addNote(`QR: ${qrData} - ${part ? part.name : "деталь не найдена"}`);
+      showToast("Добавлено в заметки");
+    });
+  }
+
+  function manualInput() {
+    const code = prompt("Введите код детали:", "BRAKE-PAD-TOYOTA");
+    if (code) processScannedCode(code);
+  }
+
+  // ==================== ГОЛОС ====================
+  let recognition = null;
+  let isRecording = false;
+
+  function initVoice() {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      const btn = document.getElementById("voiceNoteBtn");
+      if (btn) {
+        btn.disabled = true;
+        btn.textContent = "❌ Голос не поддерживается";
+      }
+      return;
+    }
+    recognition = new SpeechRecognition();
+    recognition.lang = "ru-RU";
+    recognition.continuous = false;
+    recognition.interimResults = false;
+    
+    recognition.onstart = () => {
+      isRecording = true;
+      const btn = document.getElementById("voiceNoteBtn");
+      btn.classList.add("recording");
+      btn.textContent = "🎙️ Говорите...";
+    };
+    
+    recognition.onend = () => {
+      isRecording = false;
+      const btn = document.getElementById("voiceNoteBtn");
+      btn.classList.remove("recording");
+      btn.textContent = "🎤 Записать голосом";
+    };
+    
+    recognition.onerror = () => {
+      isRecording = false;
+      const btn = document.getElementById("voiceNoteBtn");
+      btn.classList.remove("recording");
+      btn.textContent = "🎤 Ошибка, попробуйте снова";
+      setTimeout(() => {
+        if (btn.textContent === "🎤 Ошибка, попробуйте снова") {
+          btn.textContent = "🎤 Записать голосом";
+        }
+      }, 1500);
+    };
+    
+    recognition.onresult = (event) => {
+      const text = event.results[0][0].transcript;
+      if (text?.trim()) addNote(text);
+    };
+  }
+
+  function startVoiceNote() {
+    if (!recognition) {
+      alert("Голосовой ввод не поддерживается в этом браузере");
+      return;
+    }
+    if (isRecording) recognition.stop();
+    else recognition.start();
+  }
+
+  // ==================== ЭКСПОРТ ====================
+  function exportAllData() {
+    const data = {
+      exportDate: new Date().toISOString(),
+      notes: notes,
+      searchHistory: searchHistory
+    };
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.download = `autoqr_data_${new Date().toISOString().slice(0,10)}.json`;
+    a.href = url;
+    a.click();
+    URL.revokeObjectURL(url);
+    showToast("Данные экспортированы");
+  }
+
+  // ==================== ВСПОМОГАТЕЛЬНЫЕ ====================
+  function escapeHtml(str) {
+    return String(str).replace(/[&<>]/g, m => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;' }[m]));
+  }
+
+  function formatDate(dateStr) {
+    const date = new Date(dateStr);
+    return date.toLocaleString('ru-RU', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' });
+  }
+
+  function showToast(msg) {
+    // Простой тост
+    const toast = document.createElement('div');
+    toast.textContent = msg;
+    toast.style.cssText = 'position:fixed; bottom:80px; left:50%; transform:translateX(-50%); background:#333; color:white; padding:8px 16px; border-radius:20px; font-size:12px; z-index:1000;';
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 2000);
+  }
+
+  // ==================== НАВИГАЦИЯ ====================
+  function switchTab(tabId) {
+    document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+    document.getElementById(`tab-${tabId}`).classList.add('active');
+    document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+    document.querySelector(`.nav-btn[data-tab="${tabId}"]`).classList.add('active');
+  }
+
+  // ==================== ЗАПУСК ====================
+  document.addEventListener("DOMContentLoaded", () => {
+    loadData();
+    initVoice();
+    
+    // Навигация
+    document.querySelectorAll('.nav-btn').forEach(btn => {
+      btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+    });
+    
+    // Сканер
+    document.getElementById("startScannerBtn").addEventListener("click", startScanner);
+    document.getElementById("stopScannerBtn").addEventListener("click", stopScanner);
+    document.getElementById("manualInputBtn").addEventListener("click", manualInput);
+    
+    // Заметки
+    document.getElementById("voiceNoteBtn").addEventListener("click", startVoiceNote);
+    document.getElementById("deleteByWordBtn").addEventListener("click", () => {
+      const word = document.getElementById("deleteWordInput").value;
+      deleteNotesByWord(word);
+    });
+    document.getElementById("clearAllNotesBtn").addEventListener("click", cl
