@@ -1,74 +1,309 @@
-// Моковая база автодеталей по ключам QR
-const partsDatabase = {
-  "BRAKE-PAD-FRONT": {
-    name: "Колодки тормозные передние",
-    compatible: "Toyota Camry, RAV4, Corolla",
-    sku: "BPF-8821",
-    stock: "✅ в наличии",
-  },
-  "OIL-FILTER-101": {
-    name: "Фильтр масляный",
-    compatible: "VW Golf, Passat, Audi A3",
-    sku: "MANN W712/92",
-    stock: "📦 15 шт",
-  },
-  "SPARK-PLUG-BOSCH": {
-    name: "Свечи зажигания Bosch",
-    compatible: "BMW 3/5 серии, Mini Cooper",
-    sku: "FR7KPP33+",
-    stock: "🔥 48 шт",
-  },
-  "ALTERNATOR-A08": {
-    name: "Генератор 150A",
-    compatible: "Mercedes W204, W212",
-    sku: "GEN-150-MB",
-    stock: "⏳ под заказ 2 дня",
-  },
+// ==================== БАЗА ДЕТАЛЕЙ ====================
+const partsDB = {
+  "BRAKE-PAD-TOYOTA": { name: "Колодки тормозные передние", compatible: "Toyota Camry/RAV4", sku: "BPF-8821", stock: "✅ в наличии" },
+  "OIL-FILTER-VW": { name: "Фильтр масляный", compatible: "VW Golf/Passat", sku: "MANN W712/92", stock: "📦 15 шт" },
+  "SPARK-BOSCH": { name: "Свечи зажигания Bosch", compatible: "BMW/Mini", sku: "FR7KPP33+", stock: "🔥 48 шт" },
+  "ALTERNATOR-MB": { name: "Генератор 150A", compatible: "Mercedes W204", sku: "GEN-150-MB", stock: "⏳ под заказ" }
 };
 
-// Хранилище заметок
-let notes = [];
+// ==================== ДАННЫЕ ====================
+let notes = [];           // { id, text, completed, hidden, createdAt }
+let searchHistory = [];   // { qrCode, partName, timestamp }
+let currentSort = "date_desc";
 
-// DOM элементы
-const partInfoDiv = document.getElementById("partInfo");
-const notesListDiv = document.getElementById("notesList");
-const scanBtn = document.getElementById("scanQrBtn");
-const demoBtn = document.getElementById("demoQrBtn");
-const voiceBtn = document.getElementById("startVoiceBtn");
+// ==================== СОХРАНЕНИЕ / ЗАГРУЗКА ====================
+function saveAll() {
+  localStorage.setItem("autoqr_notes", JSON.stringify(notes));
+  localStorage.setItem("autoqr_history", JSON.stringify(searchHistory));
+  localStorage.setItem("autoqr_sort", currentSort);
+}
 
-// ---- Отображение заметок ----
+function loadAll() {
+  const savedNotes = localStorage.getItem("autoqr_notes");
+  if (savedNotes) notes = JSON.parse(savedNotes);
+  else notes = [];
+
+  const savedHistory = localStorage.getItem("autoqr_history");
+  if (savedHistory) searchHistory = JSON.parse(savedHistory);
+  else searchHistory = [];
+
+  const savedSort = localStorage.getItem("autoqr_sort");
+  if (savedSort) currentSort = savedSort;
+  const sortSelect = document.getElementById("sortSelect");
+  if (sortSelect) sortSelect.value = currentSort;
+}
+
+// ==================== ДОБАВЛЕНИЕ ЗАМЕТКИ ====================
+function addNote(text, hidden = false) {
+  if (!text.trim()) return;
+  notes.unshift({
+    id: Date.now(),
+    text: text.trim(),
+    completed: false,
+    hidden: hidden,
+    createdAt: new Date().toISOString()
+  });
+  saveAll();
+  renderNotes();
+  if (document.getElementById("journalModal").style.display === "flex") renderFullNotes();
+}
+
+// ==================== ОТРИСОВКА ГЛАВНОГО ЭКРАНА (только НЕ скрытые) ====================
 function renderNotes() {
-  if (!notesListDiv) return;
-  if (notes.length === 0) {
-    notesListDiv.innerHTML = `<div style="color:#6c7a9e; text-align:center; padding:20px;">📭 Нет заметок. Запишите голосовую</div>`;
+  const container = document.getElementById("notesList");
+  const visibleNotes = notes.filter(n => !n.hidden);
+  if (visibleNotes.length === 0) {
+    container.innerHTML = `<div style="text-align:center; padding:20px; color:#6c7a9e;">📭 Нет заметок</div>`;
     return;
   }
-
-  notesListDiv.innerHTML = notes.map((note, idx) => `
-    <div class="note-item ${note.completed ? 'completed' : ''}" data-idx="${idx}">
+  container.innerHTML = visibleNotes.map(note => `
+    <div class="note-item ${note.completed ? 'completed' : ''}" data-id="${note.id}">
       <div class="note-text">${escapeHtml(note.text)}</div>
-      <button class="check-btn ${note.completed ? 'completed' : ''}" data-idx="${idx}">
-        ${note.completed ? '✓' : '○'}
-      </button>
+      <button class="check-btn ${note.completed ? 'completed' : ''}" data-id="${note.id}">${note.completed ? '✓' : '○'}</button>
     </div>
   `).join('');
-
-  // Вешаем события на кнопки
   document.querySelectorAll('.check-btn').forEach(btn => {
     btn.addEventListener('click', (e) => {
-      const idx = parseInt(btn.dataset.idx);
-      if (!isNaN(idx) && notes[idx]) {
-        notes[idx].completed = !notes[idx].completed;
-        saveNotesToLocal();
-        renderNotes();
-      }
+      const id = parseInt(btn.dataset.id);
+      const note = notes.find(n => n.id === id);
+      if (note) { note.completed = !note.completed; saveAll(); renderNotes(); if (isJournalOpen()) renderFullNotes(); }
       e.stopPropagation();
     });
   });
 }
 
+// ==================== ЖУРНАЛ ВОДИТЕЛЯ (все заметки) ====================
+function renderFullNotes() {
+  let filtered = [...notes];
+  if (currentSort === "date_desc") filtered.sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
+  else if (currentSort === "date_asc") filtered.sort((a,b) => new Date(a.createdAt) - new Date(b.createdAt));
+  else if (currentSort === "text_asc") filtered.sort((a,b) => a.text.localeCompare(b.text));
+  else if (currentSort === "text_desc") filtered.sort((a,b) => b.text.localeCompare(a.text));
+  else if (currentSort === "completed_first") filtered.sort((a,b) => b.completed - a.completed);
+  else if (currentSort === "pending_first") filtered.sort((a,b) => a.completed - b.completed);
+
+  const container = document.getElementById("fullNotesList");
+  if (filtered.length === 0) { container.innerHTML = "<div style='padding:20px;text-align:center'>Нет заметок</div>"; return; }
+  container.innerHTML = filtered.map(note => `
+    <div class="journal-item" style="opacity: ${note.hidden ? 0.6 : 1}">
+      <div><strong>${escapeHtml(note.text)}</strong> ${note.hidden ? "(скрыта)" : ""}</div>
+      <div style="font-size:11px; color:#8e9bb5;">${new Date(note.createdAt).toLocaleString()}</div>
+      <div class="flex-row" style="margin-top:8px;">
+        <button class="small-btn complete-journal" data-id="${note.id}">${note.completed ? "✅ Выполнена" : "◻️ Выполнить"}</button>
+        <button class="small-btn hide-journal" data-id="${note.id}">${note.hidden ? "👁️ Показать" : "🙈 Скрыть"}</button>
+        <button class="small-btn danger delete-journal" data-id="${note.id}">🗑️ Удалить</button>
+      </div>
+    </div>
+  `).join('');
+
+  document.querySelectorAll('.complete-journal').forEach(btn => {
+    btn.addEventListener('click', (e) => { const id = parseInt(btn.dataset.id); const n = notes.find(n=>n.id===id); if(n){ n.completed = !n.completed; saveAll(); renderNotes(); renderFullNotes(); } });
+  });
+  document.querySelectorAll('.hide-journal').forEach(btn => {
+    btn.addEventListener('click', (e) => { const id = parseInt(btn.dataset.id); const n = notes.find(n=>n.id===id); if(n){ n.hidden = !n.hidden; saveAll(); renderNotes(); renderFullNotes(); } });
+  });
+  document.querySelectorAll('.delete-journal').forEach(btn => {
+    btn.addEventListener('click', (e) => { const id = parseInt(btn.dataset.id); notes = notes.filter(n=>n.id!==id); saveAll(); renderNotes(); renderFullNotes(); });
+  });
+}
+
+function renderHistory() {
+  const container = document.getElementById("searchHistoryList");
+  if (!container) return;
+  if (searchHistory.length === 0) { container.innerHTML = "<div style='padding:8px; color:#8e9bb5'>История пуста</div>"; return; }
+  container.innerHTML = searchHistory.slice().reverse().map(h => `
+    <div class="history-item">
+      🔍 <strong>${escapeHtml(h.qrCode)}</strong> → ${escapeHtml(h.partName)}<br>
+      <span style="font-size:10px;">${new Date(h.timestamp).toLocaleString()}</span>
+    </div>
+  `).join('');
+}
+
+function addToHistory(qr, partName) {
+  searchHistory.unshift({ qrCode: qr, partName: partName, timestamp: new Date().toISOString() });
+  if (searchHistory.length > 50) searchHistory.pop();
+  saveAll();
+  renderHistory();
+}
+
+// ==================== QR И ДЕТАЛИ ====================
+function showPartInfo(qrData) {
+  const part = partsDB[qrData];
+  const infoDiv = document.getElementById("partInfo");
+  if (part) {
+    infoDiv.innerHTML = `<div class="detail-card"><strong>🔩 ${part.name}</strong><br>📌 ${part.sku}<br>🚗 ${part.compatible}<br>📦 ${part.stock}<br><span style="font-size:11px;">QR: ${qrData}</span></div>`;
+    addToHistory(qrData, part.name);
+  } else {
+    infoDiv.innerHTML = `<div class="detail-card" style="border-left-color:#d43f34;">❌ Деталь не найдена<br>Код: ${qrData}</div>`;
+    addToHistory(qrData, "Неизвестная деталь");
+  }
+}
+
+async function scanQR() {
+  if (!('BarcodeDetector' in window)) {
+    const manual = prompt("Введите код с QR (BarcodeDetector не поддерживается):", "BRAKE-PAD-TOYOTA");
+    if (manual) showPartInfo(manual);
+    return;
+  }
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+    const video = document.createElement('video');
+    video.srcObject = stream;
+    video.setAttribute("playsinline", "");
+    await video.play();
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    const detector = new BarcodeDetector({ formats: ['qr_code'] });
+    let scanning = true;
+    const interval = setInterval(async () => {
+      if (!scanning) return;
+      if (video.videoWidth > 0) {
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        ctx.drawImage(video, 0, 0);
+        const barcodes = await detector.detect(canvas);
+        if (barcodes.length > 0) {
+          clearInterval(interval);
+          scanning = false;
+          stream.getTracks().forEach(t => t.stop());
+          video.remove();
+          showPartInfo(barcodes[0].rawValue);
+        }
+      }
+    }, 300);
+    setTimeout(() => {
+      if (scanning) {
+        clearInterval(interval);
+        scanning = false;
+        stream.getTracks().forEach(t => t.stop());
+        video.remove();
+        document.getElementById("partInfo").innerHTML = `<div class="detail-card">⏱️ Время вышло, QR не найден</div>`;
+      }
+    }, 15000);
+  } catch(e) {
+    document.getElementById("partInfo").innerHTML = `<div class="detail-card">⚠️ Ошибка камеры: ${e.message}</div>`;
+  }
+}
+
+function demoPart() {
+  const keys = Object.keys(partsDB);
+  const randomKey = keys[Math.floor(Math.random() * keys.length)];
+  showPartInfo(randomKey);
+}
+
+// ==================== ГОЛОС ====================
+let recognition = null;
+let isRecording = false;
+
+function initVoice() {
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRecognition) {
+    const btn = document.getElementById("startVoiceBtn");
+    btn.disabled = true;
+    btn.textContent = "❌ Голос не поддерживается";
+    return;
+  }
+  recognition = new SpeechRecognition();
+  recognition.lang = "ru-RU";
+  recognition.continuous = false;
+  recognition.interimResults = false;
+  recognition.onstart = () => {
+    isRecording = true;
+    const btn = document.getElementById("startVoiceBtn");
+    btn.classList.add("recording");
+    btn.textContent = "🎙️ Запись... говорите";
+  };
+  recognition.onend = () => {
+    isRecording = false;
+    const btn = document.getElementById("startVoiceBtn");
+    btn.classList.remove("recording");
+    btn.textContent = "🎤 Записать голосом → текст";
+  };
+  recognition.onerror = () => {
+    isRecording = false;
+    const btn = document.getElementById("startVoiceBtn");
+    btn.classList.remove("recording");
+    btn.textContent = "🎤 Ошибка, попробуйте снова";
+    setTimeout(() => { btn.textContent = "🎤 Записать голосом → текст"; }, 1500);
+  };
+  recognition.onresult = (event) => {
+    const text = event.results[0][0].transcript;
+    if (text.trim()) addNote(text);
+    else addNote("(неразборчиво)");
+  };
+}
+
+function startVoice() {
+  if (!recognition) return alert("Голосовой ввод недоступен");
+  if (isRecording) recognition.stop();
+  else recognition.start();
+}
+
+// ==================== УДАЛЕНИЕ, СБРОС, ЭКСПОРТ ====================
+function deleteByWord() {
+  const word = document.getElementById("deleteWordInput").value.trim();
+  if (!word) return alert("Введите слово для удаления");
+  notes = notes.filter(n => !n.text.toLowerCase().includes(word.toLowerCase()));
+  saveAll();
+  renderNotes();
+  if (isJournalOpen()) renderFullNotes();
+}
+
+function fullReset() {
+  if (confirm("⚠️ Удалить ВСЕ заметки и историю поисков? Отменить нельзя.")) {
+    notes = [];
+    searchHistory = [];
+    saveAll();
+    renderNotes();
+    if (isJournalOpen()) { renderFullNotes(); renderHistory(); }
+    document.getElementById("partInfo").innerHTML = "";
+  }
+}
+
+function exportData() {
+  const data = { exportDate: new Date().toISOString(), notes, searchHistory, sort: currentSort };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  const today = new Date().toISOString().slice(0,10);
+  a.download = `Журнал_водителя_${today}.json`;
+  a.href = url;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function clearHistoryOnly() {
+  searchHistory = [];
+  saveAll();
+  renderHistory();
+}
+
+// ==================== МОДАЛКА ====================
+function isJournalOpen() {
+  const modal = document.getElementById("journalModal");
+  return modal && modal.style.display === "flex";
+}
+
+function openJournal() {
+  renderFullNotes();
+  renderHistory();
+  document.getElementById("journalModal").style.display = "flex";
+}
+
+function closeJournal() {
+  document.getElementById("journalModal").style.display = "none";
+}
+
+// ==================== СОРТИРОВКА ====================
+function onSortChange(e) {
+  currentSort = e.target.value;
+  saveAll();
+  if (isJournalOpen()) renderFullNotes();
+}
+
+// ==================== HTML-ESCAPE ====================
 function escapeHtml(str) {
-  return str.replace(/[&<>]/g, function(m) {
+  return String(str).replace(/[&<>]/g, function(m) {
     if (m === '&') return '&amp;';
     if (m === '<') return '&lt;';
     if (m === '>') return '&gt;';
@@ -76,206 +311,26 @@ function escapeHtml(str) {
   });
 }
 
-function saveNotesToLocal() {
-  localStorage.setItem('voice_notes_auto', JSON.stringify(notes));
-}
-
-function loadNotes() {
-  const saved = localStorage.getItem('voice_notes_auto');
-  if (saved) {
-    try {
-      notes = JSON.parse(saved);
-    } catch(e) { notes = []; }
-  } else {
-    notes = [];
-  }
-  renderNotes();
-}
-
-// Добавить заметку из текста
-function addNote(text) {
-  if (!text.trim()) return;
-  notes.unshift({
-    id: Date.now(),
-    text: text.trim(),
-    completed: false,
-    createdAt: new Date().toISOString(),
-  });
-  saveNotesToLocal();
-  renderNotes();
-}
-
-// ---- Отображение информации о детали по QR-коду ----
-function showPartInfo(qrCodeData) {
-  const part = partsDatabase[qrCodeData];
-  if (part) {
-    partInfoDiv.innerHTML = `
-      <div class="detail-card">
-        <strong>🔩 ${part.name}</strong><br>
-        📌 Артикул: ${part.sku}<br>
-        🚗 Совместимость: ${part.compatible}<br>
-        📦 Наличие: ${part.stock}<br>
-        <span style="font-size:12px; opacity:0.7;">🔎 QR: ${qrCodeData}</span>
-      </div>
-    `;
-  } else {
-    partInfoDiv.innerHTML = `
-      <div class="detail-card" style="border-left-color: #d43f34;">
-        ⚠️ Деталь не найдена<br>
-        <span style="font-size:13px;">Код: ${qrCodeData}<br>Проверьте QR или добавьте вручную</span>
-      </div>
-    `;
-  }
-}
-
-// --- Имитация сканера QR (в PWA реальный сканер через библиотеку, но для удобства используем prompt/input)
-// Для полноты реализуем через браузерный сканер (BarcodeDetector API, если доступен)
-async function scanQRCode() {
-  // Попробуем современный BarcodeDetector (поддерживается в Chrome, Edge)
-  if ('BarcodeDetector' in window) {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
-      const video = document.createElement('video');
-      video.srcObject = stream;
-      await video.play();
-
-      // создаём canvas для кадров
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
-      const detector = new BarcodeDetector({ formats: ['qr_code'] });
-
-      let scanning = true;
-      const scanInterval = setInterval(async () => {
-        if (!scanning) return;
-        if (video.videoWidth > 0 && video.videoHeight > 0) {
-          canvas.width = video.videoWidth;
-          canvas.height = video.videoHeight;
-          ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-          const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-          try {
-            const barcodes = await detector.detect(imageData);
-            if (barcodes.length > 0) {
-              const qrValue = barcodes[0].rawValue;
-              clearInterval(scanInterval);
-              scanning = false;
-              stream.getTracks().forEach(track => track.stop());
-              video.remove();
-              showPartInfo(qrValue);
-            }
-          } catch(e) {}
-        }
-      }, 300);
-
-      // остановка через 15 секунд если не нашли
-      setTimeout(() => {
-        if (scanning) {
-          clearInterval(scanInterval);
-          scanning = false;
-          stream.getTracks().forEach(track => track.stop());
-          video.remove();
-          partInfoDiv.innerHTML = `<div class="detail-card" style="border-left-color:#d43f34;">❌ QR не найден. Попробуйте демо-кнопку.</div>`;
-        }
-      }, 15000);
-
-    } catch(err) {
-      partInfoDiv.innerHTML = `<div class="detail-card">⚠️ Нет доступа к камере. Используйте демо-режим.</div>`;
-    }
-  } else {
-    // fallback: простой ввод текста QR
-    const manualQr = prompt("Введите код с QR-метки (или используйте демо):", "BRAKE-PAD-FRONT");
-    if (manualQr) showPartInfo(manualQr);
-  }
-}
-
-// Демо-режим: показать популярные детали
-function demoPart() {
-  const demoKey = Object.keys(partsDatabase)[Math.floor(Math.random() * Object.keys(partsDatabase).length)];
-  showPartInfo(demoKey);
-}
-
-// --- ГОЛОСОВЫЕ ЗАМЕТКИ (SpeechRecognition) ---
-let recognition = null;
-let isRecording = false;
-
-function initSpeech() {
-  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (!SpeechRecognition) {
-    voiceBtn.disabled = true;
-    voiceBtn.textContent = "🎤 Голос не поддерживается";
-    voiceBtn.style.opacity = "0.5";
-    return;
-  }
-  recognition = new SpeechRecognition();
-  recognition.lang = "ru-RU";
-  recognition.continuous = false;
-  recognition.interimResults = false;
-  recognition.maxAlternatives = 1;
-
-  recognition.onstart = () => {
-    isRecording = true;
-    voiceBtn.classList.add("recording");
-    voiceBtn.textContent = "🎙️ Запись... скажите текст";
-  };
-  recognition.onend = () => {
-    isRecording = false;
-    voiceBtn.classList.remove("recording");
-    voiceBtn.textContent = "🎤 Записать заметку (голос → текст)";
-  };
-  recognition.onerror = (event) => {
-    console.error("Ошибка распознавания", event.error);
-    isRecording = false;
-    voiceBtn.classList.remove("recording");
-    voiceBtn.textContent = "🎤 Повторить запись";
-    setTimeout(() => {
-      voiceBtn.textContent = "🎤 Записать заметку (голос → текст)";
-    }, 1500);
-  };
-  recognition.onresult = (event) => {
-    const transcript = event.results[0][0].transcript;
-    if (transcript && transcript.trim()) {
-      addNote(transcript);
-    } else {
-      addNote("(неразборчиво)");
-    }
-  };
-}
-
-function startVoiceNote() {
-  if (!recognition) {
-    alert("Ваш браузер не поддерживает голосовой ввод (SpeechRecognition)");
-    return;
-  }
-  if (isRecording) {
-    recognition.stop();
-  } else {
-    try {
-      recognition.start();
-    } catch(e) {
-      alert("Микрофон недоступен, проверьте разрешения");
-    }
-  }
-}
-
-// ---- Инициализация приложения и PWA ----
+// ==================== ЗАПУСК ====================
 document.addEventListener("DOMContentLoaded", () => {
-  loadNotes();
-  initSpeech();
-
-  scanBtn.addEventListener("click", scanQRCode);
-  demoBtn.addEventListener("click", demoPart);
-  voiceBtn.addEventListener("click", startVoiceNote);
-
-  // Предзаполним демо-заметкой для примера, если пусто
-  if (notes.length === 0) {
-    setTimeout(() => {
-      addNote("🔧 Заменить тормозные колодки (по QR-коду)");
-    }, 500);
-  }
+  loadAll();
+  renderNotes();
+  initVoice();
+  document.getElementById("scanQrBtn").addEventListener("click", scanQR);
+  document.getElementById("demoQrBtn").addEventListener("click", demoPart);
+  document.getElementById("startVoiceBtn").addEventListener("click", startVoice);
+  document.getElementById("openJournalBtn").addEventListener("click", openJournal);
+  document.querySelector(".close-modal").addEventListener("click", closeJournal);
+  document.getElementById("deleteByWordBtn").addEventListener("click", deleteByWord);
+  document.getElementById("fullResetBtn").addEventListener("click", fullReset);
+  document.getElementById("exportDataBtn").addEventListener("click", exportData);
+  document.getElementById("clearHistoryBtn").addEventListener("click", clearHistoryOnly);
+  document.getElementById("sortSelect").addEventListener("change", onSortChange);
+  window.addEventListener("click", (e) => { if (e.target === document.getElementById("journalModal")) closeJournal(); });
+  if (notes.length === 0) setTimeout(() => addNote("🔧 Пример: заменить масло через 5000 км"), 300);
 });
 
-// Регистрация Service Worker для PWA (оффлайн-кеш)
+// Service Worker
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/sw.js').then(reg => {
-    console.log('SW registered', reg);
-  }).catch(err => console.log('SW error', err));
+  navigator.serviceWorker.register('/sw.js').catch(e => console.log("SW error", e));
 }
