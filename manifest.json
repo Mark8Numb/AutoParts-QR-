@@ -1,11 +1,11 @@
 {
-  "name": "AutoQR — Журнал водителя",
+  "name": "AutoQR Pro — Журнал водителя",
   "short_name": "AutoQR",
   "start_url": ".",
   "display": "standalone",
   "background_color": "#0a0f1e",
   "theme_color": "#0a0f1e",
-  "description": "QR для автодеталей + голосовые заметки",
+  "description": "QR-сканер автодеталей + голосовые заметки",
   "icons": [
     { "src": "icon.png", "sizes": "192x192", "type": "image/png" },
     { "src": "icon.png", "sizes": "512x512", "type": "image/png" }
