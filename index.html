@@ -4,9 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>AutoQR — Журнал водителя</title>
-  <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#0a0f1e">
-  <link rel="apple-touch-icon" href="icon.png">
   <style>
     * {
       margin: 0;
@@ -45,6 +42,11 @@
       background-clip: text;
       color: transparent;
       margin-bottom: 4px;
+    }
+
+    h3 {
+      font-size: 20px;
+      margin-bottom: 12px;
     }
 
     .sub {
@@ -93,7 +95,7 @@
       background: #8b1515;
     }
 
-    input, textarea, select {
+    input, select {
       background: #0e1428;
       border: 1px solid #2a3655;
       padding: 10px 16px;
@@ -121,6 +123,8 @@
       display: flex;
       flex-direction: column;
       gap: 10px;
+      max-height: 400px;
+      overflow-y: auto;
     }
 
     .note-item {
@@ -146,13 +150,19 @@
     }
 
     .check-btn {
-      width: 28px;
-      height: 28px;
+      width: 32px;
+      height: 32px;
       border-radius: 30px;
       background: none;
       border: 2px solid #4c6a9e;
       padding: 0;
       justify-content: center;
+      font-size: 18px;
+    }
+
+    .check-btn.completed {
+      background: #2b6ef0;
+      border-color: #2b6ef0;
     }
 
     .mic-btn {
@@ -225,6 +235,12 @@
       border-color: #2a3655;
       margin: 16px 0;
     }
+
+    .empty-message {
+      text-align: center;
+      padding: 20px;
+      color: #6c7a9e;
+    }
   </style>
 </head>
 <body>
@@ -247,9 +263,9 @@
       <button id="openJournalBtn" class="primary" style="background:#2b6ef0;">📓 Журнал водителя</button>
     </div>
     <div id="notesList" class="notes-list">
-      <div style="text-align:center; padding:20px; color:#6c7a9e;">Нет заметок</div>
+      <div class="empty-message">📭 Нет заметок</div>
     </div>
-    <button id="startVoiceBtn" class="mic-btn" style="margin-top: 16px;">🎤 Записать голосом → текст</button>
+    <button id="startVoiceBtn" class="mic-btn" style="margin-top: 16px; width: 100%; justify-content: center;">🎤 Записать голосом → текст</button>
     <div class="flex-row" style="margin-top: 12px;">
       <input type="text" id="deleteWordInput" placeholder="Слово для удаления" style="flex:1;">
       <button id="deleteByWordBtn" class="danger small-btn">🗑️ Удалить по слову</button>
@@ -284,6 +300,354 @@
   </div>
 </div>
 
-<script src="app.js"></script>
-</body>
-</html>
+<script>
+  // ==================== БАЗА ДЕТАЛЕЙ ====================
+  const partsDB = {
+    "BRAKE-PAD-TOYOTA": { name: "Колодки тормозные передние", compatible: "Toyota Camry/RAV4", sku: "BPF-8821", stock: "✅ в наличии" },
+    "OIL-FILTER-VW": { name: "Фильтр масляный", compatible: "VW Golf/Passat", sku: "MANN W712/92", stock: "📦 15 шт" },
+    "SPARK-BOSCH": { name: "Свечи зажигания Bosch", compatible: "BMW/Mini", sku: "FR7KPP33+", stock: "🔥 48 шт" },
+    "ALTERNATOR-MB": { name: "Генератор 150A", compatible: "Mercedes W204", sku: "GEN-150-MB", stock: "⏳ под заказ" }
+  };
+
+  // ==================== ДАННЫЕ ====================
+  let notes = [];
+  let searchHistory = [];
+  let currentSort = "date_desc";
+
+  // ==================== СОХРАНЕНИЕ / ЗАГРУЗКА ====================
+  function saveAll() {
+    localStorage.setItem("autoqr_notes", JSON.stringify(notes));
+    localStorage.setItem("autoqr_history", JSON.stringify(searchHistory));
+    localStorage.setItem("autoqr_sort", currentSort);
+    console.log("Сохранено:", notes.length, "заметок");
+  }
+
+  function loadAll() {
+    const savedNotes = localStorage.getItem("autoqr_notes");
+    if (savedNotes) {
+      notes = JSON.parse(savedNotes);
+      console.log("Загружено заметок:", notes.length);
+    } else {
+      notes = [];
+    }
+
+    const savedHistory = localStorage.getItem("autoqr_history");
+    if (savedHistory) searchHistory = JSON.parse(savedHistory);
+    else searchHistory = [];
+
+    const savedSort = localStorage.getItem("autoqr_sort");
+    if (savedSort) currentSort = savedSort;
+    const sortSelect = document.getElementById("sortSelect");
+    if (sortSelect) sortSelect.value = currentSort;
+  }
+
+  // ==================== ДОБАВЛЕНИЕ ЗАМЕТКИ ====================
+  function addNote(text, hidden = false) {
+    if (!text || !text.trim()) return;
+    
+    const trimmedText = text.trim();
+    
+    // Защита от дублей в течение 1 секунды
+    const lastNote = notes[0];
+    if (lastNote && lastNote.text === trimmedText && (Date.now() - lastNote.id) < 1000) {
+      console.log("Дубль заблокирован");
+      return;
+    }
+    
+    const newNote = {
+      id: Date.now(),
+      text: trimmedText,
+      completed: false,
+      hidden: hidden,
+      createdAt: new Date().toISOString()
+    };
+    
+    notes.unshift(newNote);
+    saveAll();
+    renderNotes();
+    if (isJournalOpen()) renderFullNotes();
+    
+    console.log("Добавлена заметка:", trimmedText);
+  }
+
+  // ==================== ОТРИСОВКА ГЛАВНОГО ЭКРАНА ====================
+  function renderNotes() {
+    const container = document.getElementById("notesList");
+    const visibleNotes = notes.filter(n => !n.hidden);
+    
+    if (visibleNotes.length === 0) {
+      container.innerHTML = `<div class="empty-message">📭 Нет заметок</div>`;
+      return;
+    }
+    
+    container.innerHTML = visibleNotes.map(note => `
+      <div class="note-item ${note.completed ? 'completed' : ''}" data-id="${note.id}">
+        <div class="note-text">${escapeHtml(note.text)}</div>
+        <button class="check-btn ${note.completed ? 'completed' : ''}" data-id="${note.id}">${note.completed ? '✓' : '○'}</button>
+      </div>
+    `).join('');
+    
+    document.querySelectorAll('.check-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const id = parseInt(btn.dataset.id);
+        const note = notes.find(n => n.id === id);
+        if (note) { 
+          note.completed = !note.completed; 
+          saveAll(); 
+          renderNotes(); 
+          if (isJournalOpen()) renderFullNotes(); 
+        }
+        e.stopPropagation();
+      });
+    });
+  }
+
+  // ==================== ЖУРНАЛ ВОДИТЕЛЯ ====================
+  function renderFullNotes() {
+    let filtered = [...notes];
+    
+    if (currentSort === "date_desc") filtered.sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
+    else if (currentSort === "date_asc") filtered.sort((a,b) => new Date(a.createdAt) - new Date(b.createdAt));
+    else if (currentSort === "text_asc") filtered.sort((a,b) => a.text.localeCompare(b.text));
+    else if (currentSort === "text_desc") filtered.sort((a,b) => b.text.localeCompare(a.text));
+    else if (currentSort === "completed_first") filtered.sort((a,b) => b.completed - a.completed);
+    else if (currentSort === "pending_first") filtered.sort((a,b) => a.completed - b.completed);
+
+    const container = document.getElementById("fullNotesList");
+    if (filtered.length === 0) { 
+      container.innerHTML = "<div class='empty-message'>Нет заметок</div>"; 
+      return; 
+    }
+    
+    container.innerHTML = filtered.map(note => `
+      <div class="journal-item" style="opacity: ${note.hidden ? 0.6 : 1}">
+        <div><strong>${escapeHtml(note.text)}</strong> ${note.hidden ? "(скрыта)" : ""}</div>
+        <div style="font-size:11px; color:#8e9bb5;">${new Date(note.createdAt).toLocaleString()}</div>
+        <div class="flex-row" style="margin-top:8px;">
+          <button class="small-btn complete-journal" data-id="${note.id}">${note.completed ? "✅ Выполнена" : "◻️ Выполнить"}</button>
+          <button class="small-btn hide-journal" data-id="${note.id}">${note.hidden ? "👁️ Показать" : "🙈 Скрыть"}</button>
+          <button class="small-btn danger delete-journal" data-id="${note.id}">🗑️ Удалить</button>
+        </div>
+      </div>
+    `).join('');
+
+    document.querySelectorAll('.complete-journal').forEach(btn => {
+      btn.addEventListener('click', (e) => { 
+        const id = parseInt(btn.dataset.id); 
+        const n = notes.find(n=>n.id===id); 
+        if(n){ n.completed = !n.completed; saveAll(); renderNotes(); renderFullNotes(); } 
+      });
+    });
+    document.querySelectorAll('.hide-journal').forEach(btn => {
+      btn.addEventListener('click', (e) => { 
+        const id = parseInt(btn.dataset.id); 
+        const n = notes.find(n=>n.id===id); 
+        if(n){ n.hidden = !n.hidden; saveAll(); renderNotes(); renderFullNotes(); } 
+      });
+    });
+    document.querySelectorAll('.delete-journal').forEach(btn => {
+      btn.addEventListener('click', (e) => { 
+        const id = parseInt(btn.dataset.id); 
+        notes = notes.filter(n=>n.id!==id); 
+        saveAll(); 
+        renderNotes(); 
+        renderFullNotes(); 
+      });
+    });
+  }
+
+  function renderHistory() {
+    const container = document.getElementById("searchHistoryList");
+    if (!container) return;
+    if (searchHistory.length === 0) { 
+      container.innerHTML = "<div class='empty-message'>История пуста</div>"; 
+      return; 
+    }
+    container.innerHTML = searchHistory.slice().reverse().map(h => `
+      <div class="history-item">
+        🔍 <strong>${escapeHtml(h.qrCode)}</strong> → ${escapeHtml(h.partName)}<br>
+        <span style="font-size:10px;">${new Date(h.timestamp).toLocaleString()}</span>
+      </div>
+    `).join('');
+  }
+
+  function addToHistory(qr, partName) {
+    searchHistory.unshift({ qrCode: qr, partName: partName, timestamp: new Date().toISOString() });
+    if (searchHistory.length > 50) searchHistory.pop();
+    saveAll();
+    renderHistory();
+  }
+
+  // ==================== QR И ДЕТАЛИ ====================
+  function showPartInfo(qrData) {
+    const part = partsDB[qrData];
+    const infoDiv = document.getElementById("partInfo");
+    if (part) {
+      infoDiv.innerHTML = `<div class="detail-card"><strong>🔩 ${part.name}</strong><br>📌 ${part.sku}<br>🚗 ${part.compatible}<br>📦 ${part.stock}<br><span style="font-size:11px;">QR: ${qrData}</span></div>`;
+      addToHistory(qrData, part.name);
+    } else {
+      infoDiv.innerHTML = `<div class="detail-card" style="border-left-color:#d43f34;">❌ Деталь не найдена<br>Код: ${qrData}</div>`;
+      addToHistory(qrData, "Неизвестная деталь");
+    }
+  }
+
+  async function scanQR() {
+    if (!('BarcodeDetector' in window)) {
+      const manual = prompt("Введите код с QR:", "BRAKE-PAD-TOYOTA");
+      if (manual) showPartInfo(manual);
+      return;
+    }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+      const video = document.createElement('video');
+      video.srcObject = stream;
+      video.setAttribute("playsinline", "");
+      await video.play();
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      const detector = new BarcodeDetector({ formats: ['qr_code'] });
+      let scanning = true;
+      const interval = setInterval(async () => {
+        if (!scanning) return;
+        if (video.videoWidth > 0) {
+          canvas.width = video.videoWidth;
+          canvas.height = video.videoHeight;
+          ctx.drawImage(video, 0, 0);
+          const barcodes = await detector.detect(canvas);
+          if (barcodes.length > 0) {
+            clearInterval(interval);
+            scanning = false;
+            stream.getTracks().forEach(t => t.stop());
+            video.remove();
+            showPartInfo(barcodes[0].rawValue);
+          }
+        }
+      }, 300);
+      setTimeout(() => {
+        if (scanning) {
+          clearInterval(interval);
+          scanning = false;
+          stream.getTracks().forEach(t => t.stop());
+          video.remove();
+          document.getElementById("partInfo").innerHTML = `<div class="detail-card">⏱️ Время вышло, QR не найден</div>`;
+        }
+      }, 15000);
+    } catch(e) {
+      document.getElementById("partInfo").innerHTML = `<div class="detail-card">⚠️ Ошибка камеры: ${e.message}</div>`;
+    }
+  }
+
+  function demoPart() {
+    const keys = Object.keys(partsDB);
+    const randomKey = keys[Math.floor(Math.random() * keys.length)];
+    showPartInfo(randomKey);
+  }
+
+  // ==================== ГОЛОС ====================
+  let recognition = null;
+  let isRecording = false;
+
+  function initVoice() {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      const btn = document.getElementById("startVoiceBtn");
+      if (btn) {
+        btn.disabled = true;
+        btn.textContent = "❌ Голос не поддерживается";
+      }
+      return;
+    }
+    recognition = new SpeechRecognition();
+    recognition.lang = "ru-RU";
+    recognition.continuous = false;
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+    
+    recognition.onstart = () => {
+      isRecording = true;
+      const btn = document.getElementById("startVoiceBtn");
+      if (btn) {
+        btn.classList.add("recording");
+        btn.textContent = "🎙️ Говорите...";
+      }
+    };
+    
+    recognition.onend = () => {
+      isRecording = false;
+      const btn = document.getElementById("startVoiceBtn");
+      if (btn) {
+        btn.classList.remove("recording");
+        btn.textContent = "🎤 Записать голосом → текст";
+      }
+    };
+    
+    recognition.onerror = (event) => {
+      console.error("Speech error:", event.error);
+      isRecording = false;
+      const btn = document.getElementById("startVoiceBtn");
+      if (btn) {
+        btn.classList.remove("recording");
+        btn.textContent = "🎤 Ошибка, попробуйте снова";
+        setTimeout(() => {
+          if (btn.textContent === "🎤 Ошибка, попробуйте снова") {
+            btn.textContent = "🎤 Записать голосом → текст";
+          }
+        }, 1500);
+      }
+    };
+    
+    recognition.onresult = (event) => {
+      const lastResult = event.results[event.results.length - 1];
+      if (lastResult && lastResult[0]) {
+        const text = lastResult[0].transcript;
+        if (text && text.trim()) {
+          addNote(text);
+        }
+      }
+    };
+  }
+
+  function startVoice() {
+    if (!recognition) {
+      alert("Голосовой ввод недоступен в этом браузере");
+      return;
+    }
+    if (isRecording) {
+      recognition.stop();
+    } else {
+      try {
+        recognition.start();
+      } catch(e) {
+        console.error("Ошибка запуска голоса:", e);
+        alert("Не удалось запустить микрофон. Проверьте разрешения.");
+      }
+    }
+  }
+
+  // ==================== УДАЛЕНИЕ, СБРОС, ЭКСПОРТ ====================
+  function deleteByWord() {
+    const word = document.getElementById("deleteWordInput").value.trim();
+    if (!word) return alert("Введите слово для удаления");
+    const before = notes.length;
+    notes = notes.filter(n => !n.text.toLowerCase().includes(word.toLowerCase()));
+    const after = notes.length;
+    saveAll();
+    renderNotes();
+    if (isJournalOpen()) renderFullNotes();
+    alert(`Удалено ${before - after} заметок`);
+  }
+
+  function fullReset() {
+    if (confirm("⚠️ Удалить ВСЕ заметки и историю поисков? Отменить нельзя.")) {
+      notes = [];
+      searchHistory = [];
+      saveAll();
+      renderNotes();
+      if (isJournalOpen()) { renderFullNotes(); renderHistory(); }
+      document.getElementById("partInfo").innerHTML = "";
+      alert("Все данные удалены");
+    }
+  }
+
+  function exportData() {
+    const data = { exportDate: new Date
