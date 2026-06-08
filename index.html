@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
-  <title>AutoQR — Журнал водителя</title>
+  <title>AutoQR — Сканер автодеталей</title>
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#1a1a2e">
   <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
@@ -13,7 +13,8 @@
     .app { max-width: 500px; margin: 0 auto; background: #1a1a2e; min-height: 100vh; }
     .header { background: linear-gradient(135deg, #16213e, #1a1a2e); padding: 20px; text-align: center; border-bottom: 1px solid #2d3561; }
     .header h1 { font-size: 24px; background: linear-gradient(135deg, #fff, #5bc0ff); -webkit-background-clip: text; background-clip: text; color: transparent; }
-    .nav { display: flex; background: #16213e; border-bottom: 1px solid #2d3561; position: sticky; top: 0; z-index: 100; }
+    .header p { font-size: 12px; color: #8e9bb5; margin-top: 4px; }
+    .nav { display: flex; background: #16213e; border-bottom: 1px solid #2d3561; }
     .nav-btn { flex: 1; padding: 14px; background: none; border: none; color: #8e9bb5; font-size: 14px; font-weight: 500; cursor: pointer; }
     .nav-btn.active { color: #5bc0ff; border-bottom: 2px solid #5bc0ff; background: rgba(91,192,255,0.1); }
     .content { padding: 16px; padding-bottom: 80px; }
@@ -23,56 +24,47 @@
     .card-title { font-size: 18px; font-weight: 600; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
     .btn { background: #2d3561; border: none; padding: 12px 16px; border-radius: 12px; font-size: 14px; font-weight: 500; color: white; cursor: pointer; transition: 0.2s; }
     .btn-primary { background: #5bc0ff; color: #1a1a2e; }
+    .btn-success { background: #10b981; }
     .btn-danger { background: #dc2626; }
     .btn-outline { background: transparent; border: 1px solid #2d3561; }
     .btn-sm { padding: 6px 12px; font-size: 12px; }
     .w-100 { width: 100%; margin-top: 8px; }
     .flex-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
     .flex-between { display: flex; justify-content: space-between; align-items: center; }
-    input, textarea, select { background: #0f0f1a; border: 1px solid #2d3561; padding: 10px 12px; border-radius: 12px; color: white; font-size: 14px; outline: none; }
-    input:focus, textarea:focus { border-color: #5bc0ff; }
-    
-    /* Сканер */
+    input { background: #0f0f1a; border: 1px solid #2d3561; padding: 10px 12px; border-radius: 12px; color: white; font-size: 14px; outline: none; flex: 1; }
     #qr-reader { width: 100%; border-radius: 16px; overflow: hidden; background: #000; }
     #qr-reader video { width: 100%; height: auto; }
     .scan-result { background: #0f0f1a; border-radius: 12px; padding: 12px; margin-top: 12px; display: none; }
-    
-    /* Фильтры заметок */
+    .found-part { border-left: 3px solid #10b981; padding-left: 12px; }
+    .not-found { border-left: 3px solid #dc2626; padding-left: 12px; }
     .filter-buttons { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
     .filter-btn { padding: 6px 12px; border-radius: 20px; background: #2d3561; border: none; color: #8e9bb5; font-size: 12px; cursor: pointer; }
     .filter-btn.active { background: #5bc0ff; color: #1a1a2e; }
-    
-    /* Список заметок */
     .notes-list { max-height: 500px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
     .note-item { background: #0f0f1a; border-radius: 16px; padding: 12px; border: 1px solid #2d3561; }
-    .note-item.overdue { border-left: 3px solid #dc2626; }
     .note-item.completed { opacity: 0.6; background: #0a0a12; }
-    .note-item.hidden { display: none; }
+    .note-item.overdue { border-left: 3px solid #dc2626; }
     .note-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
     .note-text { font-size: 14px; font-weight: 500; flex: 1; }
     .note-meta { font-size: 10px; color: #6c7a9e; margin-top: 6px; display: flex; gap: 12px; flex-wrap: wrap; }
     .note-actions { display: flex; gap: 8px; }
     .icon-btn { background: none; border: none; font-size: 18px; cursor: pointer; padding: 4px; color: #8e9bb5; }
-    .edit-input { width: 100%; margin-top: 8px; }
-    
-    /* Модальное окно */
-    .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 1000; justify-content: center; align-items: center; }
-    .modal-content { background: #16213e; border-radius: 24px; max-width: 350px; width: 90%; padding: 20px; }
-    .modal-buttons { display: flex; gap: 12px; margin-top: 20px; }
-    .modal-buttons button { flex: 1; }
-    
     .history-item { background: #0f0f1a; border-radius: 12px; padding: 10px; margin-bottom: 8px; border-left: 3px solid #5bc0ff; }
     .empty-state { text-align: center; padding: 40px 20px; color: #6c7a9e; }
+    .test-buttons { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+    .test-btn { background: #2d3561; padding: 6px 10px; border-radius: 16px; font-size: 10px; cursor: pointer; border: none; color: white; }
     .badge { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 10px; background: #2d3561; }
     .badge-overdue { background: #dc2626; }
     .badge-completed { background: #10b981; }
+    .recording { background: #dc2626 !important; animation: pulse 1s infinite; }
+    @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
   </style>
 </head>
 <body>
 <div class="app">
   <div class="header">
     <h1>🔧 AutoQR</h1>
-    <p>Сканер деталей + умные заметки</p>
+    <p>Сканер деталей + голосовые заметки + голосовая дата</p>
   </div>
 
   <div class="nav">
@@ -82,7 +74,7 @@
   </div>
 
   <div class="content">
-    <!-- Сканер -->
+    <!-- Вкладка Сканер -->
     <div id="tab-scan" class="tab active">
       <div class="card">
         <div class="card-title">📷 Сканирование QR</div>
@@ -93,31 +85,38 @@
           <button id="stopScannerBtn" class="btn btn-outline">⏹️ Остановить</button>
         </div>
         <button id="manualInputBtn" class="btn btn-outline w-100">⌨️ Ввести код вручную</button>
+        
+        <div style="margin-top: 16px;">
+          <div class="card-title" style="font-size: 14px;">🧪 Тестовые коды (нажми для проверки)</div>
+          <div class="test-buttons">
+            <button class="test-btn" data-code="A0940427401">Тормозные колодки MB</button>
+            <button class="test-btn" data-code="MANN-FILTER-W71292">Масляный фильтр MANN</button>
+            <button class="test-btn" data-code="BOSCH-0241234567">Свечи Bosch</button>
+            <button class="test-btn" data-code="TOYOTA-044650K180">Колодки Toyota</button>
+            <button class="test-btn" data-code="VW-06J115403Q">Фильтр VW</button>
+          </div>
+        </div>
       </div>
     </div>
 
-    <!-- Заметки -->
+    <!-- Вкладка Заметки -->
     <div id="tab-notes" class="tab">
       <div class="card">
         <div class="flex-between">
           <div class="card-title">🎙️ Мои заметки</div>
-          <button id="voiceNoteBtn" class="btn btn-primary btn-sm">🎤 Голосом</button>
+          <button id="voiceNoteBtn" class="btn btn-primary btn-sm">🎤 Голосом (текст+дата)</button>
         </div>
-        
-        <!-- Фильтры -->
         <div class="filter-buttons">
           <button class="filter-btn active" data-filter="all">Все</button>
           <button class="filter-btn" data-filter="active">Активные</button>
           <button class="filter-btn" data-filter="completed">Выполненные</button>
-          <button class="filter-btn" data-filter="hidden">Скрытые</button>
           <button class="filter-btn" data-filter="overdue">Просроченные</button>
         </div>
-        
         <div id="notesList" class="notes-list"><div class="empty-state">📭 Нет заметок</div></div>
       </div>
     </div>
 
-    <!-- История -->
+    <!-- Вкладка История -->
     <div id="tab-history" class="tab">
       <div class="card">
         <div class="card-title">📜 История поисков</div>
@@ -129,40 +128,27 @@
   </div>
 </div>
 
-<!-- Модалка редактирования -->
-<div id="editModal" class="modal">
-  <div class="modal-content">
-    <h3 style="margin-bottom:16px">✏️ Редактировать заметку</h3>
-    <textarea id="editText" rows="3" style="width:100%; border-radius:12px;"></textarea>
-    <div class="modal-buttons">
-      <button id="saveEditBtn" class="btn btn-primary">Сохранить</button>
-      <button id="cancelEditBtn" class="btn btn-outline">Отмена</button>
-    </div>
-  </div>
-</div>
-
 <script>
   // ==================== БАЗА ДЕТАЛЕЙ ====================
   const partsDB = {
-    "BRAKE-PAD-TOYOTA": { name: "Колодки тормозные передние", compatible: "Toyota Camry/RAV4", sku: "BPF-8821", stock: "✅ в наличии" },
-    "OIL-FILTER-VW": { name: "Фильтр масляный", compatible: "VW Golf/Passat", sku: "MANN W712/92", stock: "📦 15 шт" },
-    "SPARK-BOSCH": { name: "Свечи зажигания Bosch", compatible: "BMW/Mini", sku: "FR7KPP33+", stock: "🔥 48 шт" },
-    "ALTERNATOR-MB": { name: "Генератор 150A", compatible: "Mercedes W204", sku: "GEN-150-MB", stock: "⏳ под заказ" }
+    "A0940427401": { name: "Тормозные колодки передние", compatible: "Mercedes-Benz W212/W213", sku: "A0940427401", stock: "✅ в наличии", price: "4 890 ₽" },
+    "MANN-FILTER-W71292": { name: "Масляный фильтр MANN", compatible: "VW Golf/Passat/Audi A3/A4", sku: "W712/92", stock: "📦 45 шт", price: "890 ₽" },
+    "BOSCH-0241234567": { name: "Свечи зажигания Bosch", compatible: "BMW 3/5 серии, Mini Cooper", sku: "FR7KPP33+", stock: "🔥 128 шт", price: "1 200 ₽/шт" },
+    "TOYOTA-044650K180": { name: "Колодки тормозные передние", compatible: "Toyota Camry XV50, RAV4", sku: "04465-0K180", stock: "✅ 32 шт", price: "5 200 ₽" },
+    "VW-06J115403Q": { name: "Масляный фильтр", compatible: "VW/Audi 2.0 TSI/TFSI", sku: "06J115403Q", stock: "📦 18 шт", price: "1 150 ₽" }
   };
 
   // ==================== ДАННЫЕ ====================
-  let notes = [];        // { id, text, completed, hidden, createdAt, dueDate, completedAt }
+  let notes = [];
   let searchHistory = [];
   let currentFilter = "all";
-  let editingNoteId = null;
   
-  // Сканер
   let html5QrCode = null;
   let isScanning = false;
   
-  // Голос
   let recognition = null;
   let isRecording = false;
+  let pendingVoiceText = null; // для двухэтапного голоса (текст → дата)
 
   // ==================== СОХРАНЕНИЕ ====================
   function saveData() {
@@ -179,32 +165,45 @@
     renderHistory();
   }
 
+  // ==================== ПАРСИНГ ДАТЫ ИЗ ГОЛОСА ====================
+  function parseDateFromVoice(dateText) {
+    const text = dateText.toLowerCase().trim();
+    const now = new Date();
+    
+    // Сегодня / завтра / послезавтра
+    if (text.includes('сегодня')) return new Date(now.setHours(0,0,0,0));
+    if (text.includes('завтра')) return new Date(now.setDate(now.getDate() + 1));
+    if (text.includes('послезавтра')) return new Date(now.setDate(now.getDate() + 2));
+    
+    // Числа: "25 декабря", "15.06", "2025-12-31"
+    const dayMatch = text.match(/(\d{1,2})[\s\.-](\d{1,2})/);
+    if (dayMatch) {
+      return new Date(now.getFullYear(), parseInt(dayMatch[2])-1, parseInt(dayMatch[1]));
+    }
+    
+    // "через 3 дня"
+    const throughMatch = text.match(/через\s+(\d+)\s+дня?/);
+    if (throughMatch) {
+      return new Date(now.setDate(now.getDate() + parseInt(throughMatch[1])));
+    }
+    
+    return null;
+  }
+
   // ==================== ЗАМЕТКИ ====================
   function addNote(text, dueDate = null) {
     if (!text?.trim()) return;
-    const now = new Date();
     notes.unshift({
       id: Date.now(),
       text: text.trim(),
       completed: false,
-      hidden: false,
-      createdAt: now.toISOString(),
-      dueDate: dueDate || null,
-      completedAt: null
+      createdAt: new Date().toISOString(),
+      completedAt: null,
+      dueDate: dueDate ? dueDate.toISOString() : null
     });
     saveData();
     renderNotes();
-    showToast("✅ Заметка добавлена");
-  }
-
-  function updateNote(id, newText) {
-    const note = notes.find(n => n.id === id);
-    if (note && newText?.trim()) {
-      note.text = newText.trim();
-      saveData();
-      renderNotes();
-      showToast("✏️ Заметка обновлена");
-    }
+    showToast("✅ Заметка добавлена" + (dueDate ? " с датой выполнения" : ""));
   }
 
   function toggleComplete(id) {
@@ -214,17 +213,7 @@
       note.completedAt = note.completed ? new Date().toISOString() : null;
       saveData();
       renderNotes();
-      showToast(note.completed ? "✅ Отмечено выполнено" : "🔄 Возвращено в активные");
-    }
-  }
-
-  function toggleHide(id) {
-    const note = notes.find(n => n.id === id);
-    if (note) {
-      note.hidden = !note.hidden;
-      saveData();
-      renderNotes();
-      showToast(note.hidden ? "🙈 Заметка скрыта" : "👁️ Заметка показана");
+      showToast(note.completed ? "✅ Выполнено" : "🔄 Возвращено");
     }
   }
 
@@ -245,109 +234,45 @@
 
   function getFilteredNotes() {
     let filtered = [...notes];
-    switch(currentFilter) {
-      case "active": filtered = filtered.filter(n => !n.completed && !n.hidden); break;
-      case "completed": filtered = filtered.filter(n => n.completed); break;
-      case "hidden": filtered = filtered.filter(n => n.hidden); break;
-      case "overdue": filtered = filtered.filter(n => isOverdue(n)); break;
-      default: filtered = filtered.filter(n => !n.hidden || currentFilter === "hidden");
-    }
+    if (currentFilter === "active") filtered = filtered.filter(n => !n.completed && !isOverdue(n));
+    if (currentFilter === "completed") filtered = filtered.filter(n => n.completed);
+    if (currentFilter === "overdue") filtered = filtered.filter(n => isOverdue(n) && !n.completed);
     return filtered.sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
   }
 
   function renderNotes() {
     const container = document.getElementById("notesList");
     const filtered = getFilteredNotes();
-    
     if (!filtered.length) {
       container.innerHTML = '<div class="empty-state">📭 Нет заметок</div>';
       return;
     }
-    
     container.innerHTML = filtered.map(n => {
       const overdue = isOverdue(n);
-      const classes = [];
-      if (n.completed) classes.push("completed");
-      if (overdue && !n.completed) classes.push("overdue");
-      if (n.hidden && currentFilter !== "hidden") return "";
-      
       return `
-        <div class="note-item ${classes.join(' ')}" data-id="${n.id}">
+        <div class="note-item ${n.completed ? 'completed' : ''} ${overdue ? 'overdue' : ''}">
           <div class="note-header">
             <div class="note-text">${escapeHtml(n.text)}</div>
             <div class="note-actions">
-              <button class="icon-btn edit-note" data-id="${n.id}" title="Редактировать">✏️</button>
-              <button class="icon-btn hide-note" data-id="${n.id}" title="Скрыть">🙈</button>
-              <button class="icon-btn complete-note" data-id="${n.id}" title="Выполнено">${n.completed ? '🔄' : '✅'}</button>
-              <button class="icon-btn delete-note" data-id="${n.id}" title="Удалить">🗑️</button>
+              <button class="icon-btn complete-note" data-id="${n.id}">${n.completed ? '🔄' : '✅'}</button>
+              <button class="icon-btn delete-note" data-id="${n.id}">🗑️</button>
             </div>
           </div>
           <div class="note-meta">
             <span>📅 Создано: ${formatDate(n.createdAt)}</span>
-            ${n.dueDate ? `<span>⏰ Срок: ${formatDate(n.dueDate)}</span>` : ''}
+            ${n.dueDate ? `<span>⏰ Срок: ${formatDate(n.dueDate)} ${overdue && !n.completed ? '<span class="badge badge-overdue">Просрочено</span>' : ''}</span>` : ''}
             ${n.completedAt ? `<span>✅ Выполнено: ${formatDate(n.completedAt)}</span>` : ''}
-            ${overdue && !n.completed ? '<span class="badge badge-overdue">Просрочено</span>' : ''}
-            ${n.completed ? '<span class="badge badge-completed">Выполнено</span>' : ''}
-            ${n.hidden ? '<span class="badge">Скрыто</span>' : ''}
           </div>
         </div>
       `;
     }).join('');
-    
-    // Вешаем обработчики
-    document.querySelectorAll('.edit-note').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        openEditModal(parseInt(btn.dataset.id));
-      });
-    });
-    document.querySelectorAll('.hide-note').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        toggleHide(parseInt(btn.dataset.id));
-      });
-    });
-    document.querySelectorAll('.complete-note').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        toggleComplete(parseInt(btn.dataset.id));
-      });
-    });
-    document.querySelectorAll('.delete-note').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        deleteNote(parseInt(btn.dataset.id));
-      });
-    });
-  }
-
-  function openEditModal(id) {
-    const note = notes.find(n => n.id === id);
-    if (note) {
-      editingNoteId = id;
-      document.getElementById("editText").value = note.text;
-      document.getElementById("editModal").style.display = "flex";
-    }
-  }
-
-  function closeEditModal() {
-    editingNoteId = null;
-    document.getElementById("editModal").style.display = "none";
-  }
-
-  function saveEdit() {
-    const newText = document.getElementById("editText").value;
-    if (editingNoteId && newText.trim()) {
-      updateNote(editingNoteId, newText);
-    }
-    closeEditModal();
+    document.querySelectorAll('.complete-note').forEach(btn => btn.addEventListener('click', () => toggleComplete(parseInt(btn.dataset.id))));
+    document.querySelectorAll('.delete-note').forEach(btn => btn.addEventListener('click', () => deleteNote(parseInt(btn.dataset.id))));
   }
 
   // ==================== ИСТОРИЯ ====================
   function addToHistory(qrCode, partName) {
-    searchHistory.unshift({
-      qrCode, partName, timestamp: new Date().toISOString()
-    });
+    searchHistory.unshift({ qrCode, partName, timestamp: new Date().toISOString() });
     if (searchHistory.length > 50) searchHistory.pop();
     saveData();
     renderHistory();
@@ -355,10 +280,7 @@
 
   function renderHistory() {
     const container = document.getElementById("historyList");
-    if (!searchHistory.length) {
-      container.innerHTML = '<div class="empty-state">📭 Нет истории</div>';
-      return;
-    }
+    if (!searchHistory.length) { container.innerHTML = '<div class="empty-state">📭 Нет истории</div>'; return; }
     container.innerHTML = searchHistory.map(h => `
       <div class="history-item">
         <div><strong>${escapeHtml(h.partName)}</strong></div>
@@ -369,157 +291,10 @@
   }
 
   function clearHistory() {
-    if (confirm("Очистить историю?")) {
-      searchHistory = [];
-      saveData();
-      renderHistory();
-      showToast("История очищена");
-    }
+    if (confirm("Очистить историю?")) { searchHistory = []; saveData(); renderHistory(); showToast("История очищена"); }
   }
 
-  // ==================== QR СКАНЕР ====================
-  function startScanner() {
-    if (isScanning) {
-      showToast("Сканер уже работает");
-      return;
-    }
-    
-    const resultDiv = document.getElementById("scan-result");
-    resultDiv.style.display = "none";
-    resultDiv.innerHTML = "";
-    
-    html5QrCode = new Html5Qrcode("qr-reader");
-    
-    const config = { fps: 10, qrbox: { width: 250, height: 250 } };
-    
-    html5QrCode.start({ facingMode: "environment" }, config,
-      (decodedText) => {
-        if (isScanning) {
-          processScannedCode(decodedText);
-          stopScanner();
-        }
-      },
-      (errorMessage) => { console.log("Сканирование..."); }
-    ).then(() => {
-      isScanning = true;
-      showToast("Сканер запущен, наведите на QR");
-    }).catch((err) => {
-      console.error(err);
-      showToast("Ошибка: проверьте разрешения камеры");
-    });
-  }
-
-  function stopScanner() {
-    if (html5QrCode && isScanning) {
-      html5QrCode.stop().then(() => {
-        isScanning = false;
-        showToast("Сканер остановлен");
-      }).catch(() => {});
-    }
-  }
-
-  function processScannedCode(qrData) {
-    const resultDiv = document.getElementById("scan-result");
-    const part = partsDB[qrData];
-    
-    let html = '';
-    if (part) {
-      html = `
-        <div style="border-left: 3px solid #10b981; padding-left: 12px;">
-          <strong>🔩 ${part.name}</strong><br>
-          📌 ${part.sku}<br>
-          🚗 ${part.compatible}<br>
-          📦 ${part.stock}
-        </div>
-        <button id="addNoteFromScan" class="btn btn-outline" style="margin-top:12px; width:100%;">📝 Добавить в заметки</button>
-      `;
-      addToHistory(qrData, part.name);
-      showToast(`Найдено: ${part.name}`);
-    } else {
-      html = `
-        <div style="border-left: 3px solid #dc2626; padding-left: 12px;">
-          ⚠️ Деталь не найдена<br>Код: ${qrData}
-        </div>
-        <button id="addNoteFromScan" class="btn btn-outline" style="margin-top:12px; width:100%;">📝 Добавить код в заметки</button>
-      `;
-      addToHistory(qrData, "Неизвестная деталь");
-    }
-    
-    resultDiv.innerHTML = html;
-    resultDiv.style.display = "block";
-    
-    document.getElementById("addNoteFromScan")?.addEventListener("click", () => {
-      addNote(`QR: ${qrData} - ${part ? part.name : "деталь не найдена"}`);
-    });
-  }
-
-  function manualInput() {
-    const code = prompt("Введите код детали:", "BRAKE-PAD-TOYOTA");
-    if (code) processScannedCode(code);
-  }
-
-  // ==================== ГОЛОС ====================
-  function initVoice() {
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SpeechRecognition) {
-      const btn = document.getElementById("voiceNoteBtn");
-      if (btn) { btn.disabled = true; btn.textContent = "❌ Голос не поддерживается"; }
-      return;
-    }
-    recognition = new SpeechRecognition();
-    recognition.lang = "ru-RU";
-    recognition.continuous = false;
-    recognition.interimResults = false;
-    
-    recognition.onstart = () => {
-      isRecording = true;
-      const btn = document.getElementById("voiceNoteBtn");
-      btn.classList.add("recording");
-      btn.style.background = "#dc2626";
-      btn.textContent = "🎙️ Говорите...";
-    };
-    
-    recognition.onend = () => {
-      isRecording = false;
-      const btn = document.getElementById("voiceNoteBtn");
-      btn.classList.remove("recording");
-      btn.style.background = "";
-      btn.textContent = "🎤 Голосом";
-    };
-    
-    recognition.onerror = () => {
-      isRecording = false;
-      const btn = document.getElementById("voiceNoteBtn");
-      btn.classList.remove("recording");
-      btn.textContent = "🎤 Ошибка";
-      setTimeout(() => { btn.textContent = "🎤 Голосом"; }, 1500);
-    };
-    
-    recognition.onresult = (event) => {
-      const text = event.results[0][0].transcript;
-      if (text?.trim()) {
-        // Запрашиваем дату выполнения
-        const dueDate = prompt("Введите срок выполнения (день.месяц.год) или оставьте пустым:", "");
-        let dueDateObj = null;
-        if (dueDate && dueDate.trim()) {
-          const parts = dueDate.split('.');
-          if (parts.length === 3) {
-            dueDateObj = new Date(parts[2], parts[1]-1, parts[0]);
-          }
-        }
-        addNote(text, dueDateObj ? dueDateObj.toISOString() : null);
-      }
-    };
-  }
-
-  function startVoiceNote() {
-    if (!recognition) { alert("Голос не поддерживается"); return; }
-    if (isRecording) recognition.stop();
-    else recognition.start();
-  }
-
-  // ==================== ЭКСПОРТ ====================
-  function exportAllData() {
+  function exportData() {
     const data = { exportDate: new Date().toISOString(), notes, searchHistory };
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
     const url = URL.createObjectURL(blob);
@@ -531,22 +306,138 @@
     showToast("Данные экспортированы");
   }
 
+  // ==================== ПОИСК ПО QR ====================
+  function findPartByQR(qrData) {
+    let cleanCode = qrData;
+    if (qrData.includes('/')) cleanCode = qrData.split('/').pop();
+    if (partsDB[cleanCode]) return partsDB[cleanCode];
+    for (const [code, part] of Object.entries(partsDB)) {
+      if (cleanCode.includes(code) || code.includes(cleanCode)) return part;
+    }
+    return null;
+  }
+
+  function processScannedCode(qrData) {
+    const resultDiv = document.getElementById("scan-result");
+    const part = findPartByQR(qrData);
+    let html = '';
+    if (part) {
+      html = `<div class="found-part"><strong>🔩 ${part.name}</strong><br>📌 ${part.sku}<br>🚗 ${part.compatible}<br>📦 ${part.stock}<br>💰 ${part.price}</div><div class="flex-row" style="margin-top:12px;"><button id="addNoteFromScan" class="btn btn-success btn-sm">📝 Добавить в заметки</button></div>`;
+      addToHistory(qrData, part.name);
+      showToast(`✅ Найдено: ${part.name}`);
+    } else {
+      html = `<div class="not-found">⚠️ Деталь не найдена<br>Код: ${qrData}</div><div class="flex-row" style="margin-top:12px;"><button id="addCodeToNotes" class="btn btn-outline btn-sm">📝 Сохранить код в заметки</button></div>`;
+      addToHistory(qrData, "Неизвестная деталь");
+      showToast(`⚠️ Деталь не найдена`);
+    }
+    resultDiv.innerHTML = html;
+    resultDiv.style.display = "block";
+    document.getElementById("addNoteFromScan")?.addEventListener("click", () => addNote(`🔧 ${part.name} (${part.sku})`));
+    document.getElementById("addCodeToNotes")?.addEventListener("click", () => addNote(`QR-код: ${qrData}`));
+  }
+
+  // ==================== QR СКАНЕР ====================
+  function startScanner() {
+    if (isScanning) { showToast("Сканер уже работает"); return; }
+    const resultDiv = document.getElementById("scan-result");
+    resultDiv.style.display = "none";
+    resultDiv.innerHTML = "";
+    html5QrCode = new Html5Qrcode("qr-reader");
+    html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: { width: 250, height: 250 } },
+      (decodedText) => { if (isScanning) { processScannedCode(decodedText); stopScanner(); } },
+      () => {}
+    ).then(() => { isScanning = true; showToast("📷 Сканер запущен"); })
+     .catch(() => showToast("❌ Ошибка камеры"));
+  }
+
+  function stopScanner() {
+    if (html5QrCode && isScanning) { html5QrCode.stop().then(() => { isScanning = false; showToast("Сканер остановлен"); }).catch(()=>{}); }
+  }
+
+  function manualInput() { const code = prompt("Введите код детали:", "A0940427401"); if (code?.trim()) processScannedCode(code.trim()); }
+  function testQR(code) { processScannedCode(code); }
+
+  // ==================== ГОЛОС (ТЕКСТ + ДАТА) ====================
+  function initVoice() {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) { 
+      const btn = document.getElementById("voiceNoteBtn"); 
+      if(btn){ btn.disabled=true; btn.textContent="❌ Голос не поддерживается"; } 
+      return; 
+    }
+    recognition = new SpeechRecognition();
+    recognition.lang = "ru-RU";
+    recognition.continuous = false;
+    recognition.interimResults = false;
+    
+    recognition.onstart = () => { 
+      isRecording = true; 
+      const btn = document.getElementById("voiceNoteBtn"); 
+      btn.classList.add("recording"); 
+      if (pendingVoiceText) btn.textContent = "🎙️ Скажите дату...";
+      else btn.textContent = "🎙️ Скажите текст заметки...";
+    };
+    
+    recognition.onend = () => { 
+      isRecording = false; 
+      const btn = document.getElementById("voiceNoteBtn"); 
+      btn.classList.remove("recording"); 
+      if (!pendingVoiceText) btn.textContent = "🎤 Голосом (текст+дата)";
+    };
+    
+    recognition.onerror = () => { 
+      isRecording = false; 
+      pendingVoiceText = null;
+      const btn = document.getElementById("voiceNoteBtn"); 
+      btn.classList.remove("recording"); 
+      btn.textContent = "🎤 Ошибка";
+      setTimeout(() => { if (btn.textContent === "🎤 Ошибка") btn.textContent = "🎤 Голосом (текст+дата)"; }, 1500);
+    };
+    
+    recognition.onresult = (event) => {
+      const text = event.results[0][0].transcript;
+      if (!text?.trim()) {
+        pendingVoiceText = null;
+        return;
+      }
+      
+      // Если ждём дату
+      if (pendingVoiceText !== null) {
+        const dueDate = parseDateFromVoice(text);
+        addNote(pendingVoiceText, dueDate);
+        pendingVoiceText = null;
+        showToast(dueDate ? "✅ Заметка добавлена с датой" : "✅ Заметка добавлена без даты");
+      } else {
+        // Первый этап: получили текст заметки, теперь спрашиваем дату
+        pendingVoiceText = text;
+        showToast("📅 Теперь скажите дату выполнения (например, 'завтра' или '25 декабря')");
+        // Перезапускаем распознавание для даты
+        setTimeout(() => {
+          if (pendingVoiceText) recognition.start();
+        }, 500);
+      }
+    };
+  }
+
+  function startVoiceNote() {
+    if (!recognition) { alert("Голос не поддерживается"); return; }
+    if (isRecording) {
+      recognition.stop();
+    } else {
+      pendingVoiceText = null;
+      recognition.start();
+    }
+  }
+
   // ==================== ВСПОМОГАТЕЛЬНЫЕ ====================
-  function escapeHtml(str) {
-    return String(str).replace(/[&<>]/g, m => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;' }[m]));
-  }
-
-  function formatDate(dateStr) {
-    const date = new Date(dateStr);
-    return date.toLocaleString('ru-RU', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' });
-  }
-
-  function showToast(msg) {
-    const toast = document.createElement('div');
-    toast.textContent = msg;
-    toast.style.cssText = 'position:fixed; bottom:80px; left:50%; transform:translateX(-50%); background:#333; color:white; padding:8px 16px; border-radius:20px; font-size:12px; z-index:1000;';
-    document.body.appendChild(toast);
-    setTimeout(() => toast.remove(), 2000);
+  function escapeHtml(str) { return String(str).replace(/[&<>]/g, m => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;' }[m])); }
+  function formatDate(dateStr) { const date = new Date(dateStr); return date.toLocaleString('ru-RU', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' }); }
+  function showToast(msg) { 
+    const toast = document.createElement('div'); 
+    toast.textContent = msg; 
+    toast.style.cssText = 'position:fixed; bottom:80px; left:50%; transform:translateX(-50%); background:#333; color:white; padding:8px 16px; border-radius:20px; font-size:12px; z-index:1000;'; 
+    document.body.appendChild(toast); 
+    setTimeout(() => toast.remove(), 2500); 
   }
 
   // ==================== НАВИГАЦИЯ ====================
@@ -561,45 +452,21 @@
   document.addEventListener("DOMContentLoaded", () => {
     loadData();
     initVoice();
-    
-    // Навигация
-    document.querySelectorAll('.nav-btn').forEach(btn => {
-      btn.addEventListener('click', () => switchTab(btn.dataset.tab));
-    });
-    
-    // Фильтры
-    document.querySelectorAll('.filter-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        currentFilter = btn.dataset.filter;
-        renderNotes();
-      });
-    });
-    
-    // Сканер
+    document.querySelectorAll('.nav-btn').forEach(btn => btn.addEventListener('click', () => switchTab(btn.dataset.tab)));
+    document.querySelectorAll('.filter-btn').forEach(btn => btn.addEventListener('click', () => { 
+      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active')); 
+      btn.classList.add('active'); 
+      currentFilter = btn.dataset.filter; 
+      renderNotes(); 
+    }));
     document.getElementById("startScannerBtn")?.addEventListener("click", startScanner);
     document.getElementById("stopScannerBtn")?.addEventListener("click", stopScanner);
     document.getElementById("manualInputBtn")?.addEventListener("click", manualInput);
-    
-    // Заметки
     document.getElementById("voiceNoteBtn")?.addEventListener("click", startVoiceNote);
-    
-    // История
     document.getElementById("clearHistoryBtn")?.addEventListener("click", clearHistory);
-    document.getElementById("exportDataBtn")?.addEventListener("click", exportAllData);
-    
-    // Модалка
-    document.getElementById("saveEditBtn")?.addEventListener("click", saveEdit);
-    document.getElementById("cancelEditBtn")?.addEventListener("click", closeEditModal);
-    window.addEventListener("click", (e) => { if (e.target === document.getElementById("editModal")) closeEditModal(); });
-    
-    // Демо-заметка, если пусто
-    if (notes.length === 0) {
-      setTimeout(() => {
-        if (notes.length === 0) addNote("🔧 Заменить масло через 5000 км");
-      }, 500);
-    }
+    document.getElementById("exportDataBtn")?.addEventListener("click", exportData);
+    document.querySelectorAll('.test-btn').forEach(btn => btn.addEventListener('click', () => testQR(btn.dataset.code)));
+    if (notes.length === 0) setTimeout(() => { if (notes.length === 0) addNote("🔧 Заменить масло через 5000 км"); }, 500);
   });
 </script>
 </body>
