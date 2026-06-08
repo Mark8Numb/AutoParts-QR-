@@ -2,300 +2,77 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>AutoQR — Сканер и заметки</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+  <title>AutoQR — Журнал водителя</title>
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#1a1a2e">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <!-- Библиотека для сканера QR -->
   <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-      font-family: system-ui, -apple-system, 'Inter', 'Segoe UI', sans-serif;
-    }
-
-    body {
-      background: #0f0f1a;
-      min-height: 100vh;
-      color: #ffffff;
-    }
-
-    /* Контейнер приложения */
-    .app {
-      max-width: 500px;
-      margin: 0 auto;
-      background: #1a1a2e;
-      min-height: 100vh;
-      box-shadow: 0 0 20px rgba(0,0,0,0.3);
-    }
-
-    /* Шапка */
-    .header {
-      background: linear-gradient(135deg, #16213e, #1a1a2e);
-      padding: 20px;
-      text-align: center;
-      border-bottom: 1px solid #2d3561;
-    }
-    .header h1 {
-      font-size: 24px;
-      background: linear-gradient(135deg, #fff, #5bc0ff);
-      -webkit-background-clip: text;
-      background-clip: text;
-      color: transparent;
-    }
-    .header p {
-      font-size: 12px;
-      color: #8e9bb5;
-      margin-top: 4px;
-    }
-
-    /* Навигация */
-    .nav {
-      display: flex;
-      background: #16213e;
-      border-bottom: 1px solid #2d3561;
-    }
-    .nav-btn {
-      flex: 1;
-      padding: 14px;
-      background: none;
-      border: none;
-      color: #8e9bb5;
-      font-size: 14px;
-      font-weight: 500;
-      cursor: pointer;
-      transition: all 0.2s;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-    }
-    .nav-btn.active {
-      color: #5bc0ff;
-      border-bottom: 2px solid #5bc0ff;
-      background: rgba(91, 192, 255, 0.1);
-    }
-
-    /* Контент */
-    .content {
-      padding: 20px;
-    }
-    .tab {
-      display: none;
-    }
-    .tab.active {
-      display: block;
-    }
-
-    /* Карточки */
-    .card {
-      background: #16213e;
-      border-radius: 20px;
-      padding: 20px;
-      margin-bottom: 16px;
-      border: 1px solid #2d3561;
-    }
-    .card-title {
-      font-size: 18px;
-      font-weight: 600;
-      margin-bottom: 16px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    /* Кнопки */
-    .btn {
-      background: #2d3561;
-      border: none;
-      padding: 12px 20px;
-      border-radius: 12px;
-      font-size: 14px;
-      font-weight: 500;
-      color: white;
-      cursor: pointer;
-      transition: all 0.2s;
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .btn-primary {
-      background: #5bc0ff;
-      color: #1a1a2e;
-    }
-    .btn-primary:hover {
-      background: #3a9fd9;
-    }
-    .btn-danger {
-      background: #dc2626;
-    }
-    .btn-danger:hover {
-      background: #b91c1c;
-    }
-    .btn-outline {
-      background: transparent;
-      border: 1px solid #2d3561;
-    }
-
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: system-ui, -apple-system, 'Inter', sans-serif; }
+    body { background: #0f0f1a; min-height: 100vh; color: #fff; }
+    .app { max-width: 500px; margin: 0 auto; background: #1a1a2e; min-height: 100vh; }
+    .header { background: linear-gradient(135deg, #16213e, #1a1a2e); padding: 20px; text-align: center; border-bottom: 1px solid #2d3561; }
+    .header h1 { font-size: 24px; background: linear-gradient(135deg, #fff, #5bc0ff); -webkit-background-clip: text; background-clip: text; color: transparent; }
+    .nav { display: flex; background: #16213e; border-bottom: 1px solid #2d3561; position: sticky; top: 0; z-index: 100; }
+    .nav-btn { flex: 1; padding: 14px; background: none; border: none; color: #8e9bb5; font-size: 14px; font-weight: 500; cursor: pointer; }
+    .nav-btn.active { color: #5bc0ff; border-bottom: 2px solid #5bc0ff; background: rgba(91,192,255,0.1); }
+    .content { padding: 16px; padding-bottom: 80px; }
+    .tab { display: none; }
+    .tab.active { display: block; }
+    .card { background: #16213e; border-radius: 20px; padding: 16px; margin-bottom: 16px; border: 1px solid #2d3561; }
+    .card-title { font-size: 18px; font-weight: 600; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+    .btn { background: #2d3561; border: none; padding: 12px 16px; border-radius: 12px; font-size: 14px; font-weight: 500; color: white; cursor: pointer; transition: 0.2s; }
+    .btn-primary { background: #5bc0ff; color: #1a1a2e; }
+    .btn-danger { background: #dc2626; }
+    .btn-outline { background: transparent; border: 1px solid #2d3561; }
+    .btn-sm { padding: 6px 12px; font-size: 12px; }
+    .w-100 { width: 100%; margin-top: 8px; }
+    .flex-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+    .flex-between { display: flex; justify-content: space-between; align-items: center; }
+    input, textarea, select { background: #0f0f1a; border: 1px solid #2d3561; padding: 10px 12px; border-radius: 12px; color: white; font-size: 14px; outline: none; }
+    input:focus, textarea:focus { border-color: #5bc0ff; }
+    
     /* Сканер */
-    .scanner-container {
-      background: #000;
-      border-radius: 16px;
-      overflow: hidden;
-      margin-bottom: 16px;
-    }
-    #qr-reader {
-      width: 100%;
-      border: none;
-    }
-    #qr-reader video {
-      width: 100%;
-      height: auto;
-    }
-    .scan-result {
-      background: #0f0f1a;
-      border-radius: 12px;
-      padding: 12px;
-      margin-top: 12px;
-    }
-
+    #qr-reader { width: 100%; border-radius: 16px; overflow: hidden; background: #000; }
+    #qr-reader video { width: 100%; height: auto; }
+    .scan-result { background: #0f0f1a; border-radius: 12px; padding: 12px; margin-top: 12px; display: none; }
+    
+    /* Фильтры заметок */
+    .filter-buttons { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+    .filter-btn { padding: 6px 12px; border-radius: 20px; background: #2d3561; border: none; color: #8e9bb5; font-size: 12px; cursor: pointer; }
+    .filter-btn.active { background: #5bc0ff; color: #1a1a2e; }
+    
     /* Список заметок */
-    .notes-list {
-      max-height: 400px;
-      overflow-y: auto;
-    }
-    .note-item {
-      background: #0f0f1a;
-      border-radius: 16px;
-      padding: 14px;
-      margin-bottom: 10px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      border: 1px solid #2d3561;
-    }
-    .note-item.completed {
-      opacity: 0.6;
-      background: #0a0a12;
-    }
-    .note-text {
-      flex: 1;
-      font-size: 14px;
-      word-break: break-word;
-    }
-    .note-date {
-      font-size: 10px;
-      color: #6c7a9e;
-      margin-top: 4px;
-    }
-    .note-actions {
-      display: flex;
-      gap: 8px;
-    }
-    .icon-btn {
-      background: none;
-      border: none;
-      font-size: 20px;
-      cursor: pointer;
-      padding: 4px;
-    }
-
-    /* Микрофон */
-    .mic-btn {
-      width: 100%;
-      justify-content: center;
-      margin-top: 8px;
-    }
-    .mic-btn.recording {
-      background: #dc2626;
-      animation: pulse 1s infinite;
-    }
-    @keyframes pulse {
-      0% { opacity: 1; }
-      50% { opacity: 0.7; }
-      100% { opacity: 1; }
-    }
-
-    /* История */
-    .history-item {
-      background: #0f0f1a;
-      border-radius: 12px;
-      padding: 12px;
-      margin-bottom: 8px;
-      border-left: 3px solid #5bc0ff;
-    }
-    .history-code {
-      font-family: monospace;
-      font-size: 12px;
-      color: #5bc0ff;
-    }
-    .history-time {
-      font-size: 10px;
-      color: #6c7a9e;
-    }
-
-    /* Пустые состояния */
-    .empty-state {
-      text-align: center;
-      padding: 40px 20px;
-      color: #6c7a9e;
-    }
-
+    .notes-list { max-height: 500px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
+    .note-item { background: #0f0f1a; border-radius: 16px; padding: 12px; border: 1px solid #2d3561; }
+    .note-item.overdue { border-left: 3px solid #dc2626; }
+    .note-item.completed { opacity: 0.6; background: #0a0a12; }
+    .note-item.hidden { display: none; }
+    .note-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
+    .note-text { font-size: 14px; font-weight: 500; flex: 1; }
+    .note-meta { font-size: 10px; color: #6c7a9e; margin-top: 6px; display: flex; gap: 12px; flex-wrap: wrap; }
+    .note-actions { display: flex; gap: 8px; }
+    .icon-btn { background: none; border: none; font-size: 18px; cursor: pointer; padding: 4px; color: #8e9bb5; }
+    .edit-input { width: 100%; margin-top: 8px; }
+    
     /* Модальное окно */
-    .modal {
-      display: none;
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0,0,0,0.8);
-      z-index: 1000;
-      justify-content: center;
-      align-items: center;
-    }
-    .modal-content {
-      background: #16213e;
-      border-radius: 24px;
-      max-width: 350px;
-      width: 90%;
-      padding: 24px;
-      text-align: center;
-    }
-    .modal-buttons {
-      display: flex;
-      gap: 12px;
-      margin-top: 20px;
-    }
-    .modal-buttons button {
-      flex: 1;
-    }
-
-    /* Инпут */
-    input, textarea {
-      background: #0f0f1a;
-      border: 1px solid #2d3561;
-      padding: 12px;
-      border-radius: 12px;
-      color: white;
-      font-size: 14px;
-      width: 100%;
-      outline: none;
-    }
-    input:focus, textarea:focus {
-      border-color: #5bc0ff;
-    }
+    .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 1000; justify-content: center; align-items: center; }
+    .modal-content { background: #16213e; border-radius: 24px; max-width: 350px; width: 90%; padding: 20px; }
+    .modal-buttons { display: flex; gap: 12px; margin-top: 20px; }
+    .modal-buttons button { flex: 1; }
+    
+    .history-item { background: #0f0f1a; border-radius: 12px; padding: 10px; margin-bottom: 8px; border-left: 3px solid #5bc0ff; }
+    .empty-state { text-align: center; padding: 40px 20px; color: #6c7a9e; }
+    .badge { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 10px; background: #2d3561; }
+    .badge-overdue { background: #dc2626; }
+    .badge-completed { background: #10b981; }
   </style>
 </head>
 <body>
 <div class="app">
   <div class="header">
     <h1>🔧 AutoQR</h1>
-    <p>Сканер деталей + голосовые заметки</p>
+    <p>Сканер деталей + умные заметки</p>
   </div>
 
   <div class="nav">
@@ -305,46 +82,61 @@
   </div>
 
   <div class="content">
-    <!-- Вкладка Сканер -->
+    <!-- Сканер -->
     <div id="tab-scan" class="tab active">
       <div class="card">
         <div class="card-title">📷 Сканирование QR</div>
-        <div id="qr-reader" style="width:100%"></div>
-        <div id="scan-result" class="scan-result" style="display:none"></div>
-        <div class="flex-row" style="display: flex; gap: 12px; margin-top: 12px;">
+        <div id="qr-reader"></div>
+        <div id="scan-result" class="scan-result"></div>
+        <div class="flex-row">
           <button id="startScannerBtn" class="btn btn-primary">▶️ Запустить сканер</button>
           <button id="stopScannerBtn" class="btn btn-outline">⏹️ Остановить</button>
         </div>
-        <button id="manualInputBtn" class="btn btn-outline" style="width:100%; margin-top:8px;">⌨️ Ввести код вручную</button>
+        <button id="manualInputBtn" class="btn btn-outline w-100">⌨️ Ввести код вручную</button>
       </div>
     </div>
 
-    <!-- Вкладка Заметки -->
+    <!-- Заметки -->
     <div id="tab-notes" class="tab">
       <div class="card">
-        <div class="card-title">🎙️ Голосовые заметки</div>
-        <div class="notes-list" id="notesList">
-          <div class="empty-state">📭 Нет заметок</div>
+        <div class="flex-between">
+          <div class="card-title">🎙️ Мои заметки</div>
+          <button id="voiceNoteBtn" class="btn btn-primary btn-sm">🎤 Голосом</button>
         </div>
-        <button id="voiceNoteBtn" class="btn btn-primary mic-btn">🎤 Записать голосом</button>
-        <div class="flex-row" style="display: flex; gap: 12px; margin-top: 12px;">
-          <input type="text" id="deleteWordInput" placeholder="Слово для удаления">
-          <button id="deleteByWordBtn" class="btn btn-danger">Удалить</button>
+        
+        <!-- Фильтры -->
+        <div class="filter-buttons">
+          <button class="filter-btn active" data-filter="all">Все</button>
+          <button class="filter-btn" data-filter="active">Активные</button>
+          <button class="filter-btn" data-filter="completed">Выполненные</button>
+          <button class="filter-btn" data-filter="hidden">Скрытые</button>
+          <button class="filter-btn" data-filter="overdue">Просроченные</button>
         </div>
-        <button id="clearAllNotesBtn" class="btn btn-outline" style="width:100%; margin-top:8px;">🗑️ Очистить все заметки</button>
+        
+        <div id="notesList" class="notes-list"><div class="empty-state">📭 Нет заметок</div></div>
       </div>
     </div>
 
-    <!-- Вкладка История -->
+    <!-- История -->
     <div id="tab-history" class="tab">
       <div class="card">
         <div class="card-title">📜 История поисков</div>
-        <div id="historyList">
-          <div class="empty-state">📭 Нет истории</div>
-        </div>
-        <button id="clearHistoryBtn" class="btn btn-outline" style="width:100%;">🧹 Очистить историю</button>
-        <button id="exportDataBtn" class="btn btn-primary" style="width:100%; margin-top:8px;">💾 Экспорт всех данных</button>
+        <div id="historyList"><div class="empty-state">📭 Нет истории</div></div>
+        <button id="clearHistoryBtn" class="btn btn-outline w-100">🧹 Очистить историю</button>
+        <button id="exportDataBtn" class="btn btn-primary w-100">💾 Экспорт данных</button>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- Модалка редактирования -->
+<div id="editModal" class="modal">
+  <div class="modal-content">
+    <h3 style="margin-bottom:16px">✏️ Редактировать заметку</h3>
+    <textarea id="editText" rows="3" style="width:100%; border-radius:12px;"></textarea>
+    <div class="modal-buttons">
+      <button id="saveEditBtn" class="btn btn-primary">Сохранить</button>
+      <button id="cancelEditBtn" class="btn btn-outline">Отмена</button>
     </div>
   </div>
 </div>
@@ -355,15 +147,29 @@
     "BRAKE-PAD-TOYOTA": { name: "Колодки тормозные передние", compatible: "Toyota Camry/RAV4", sku: "BPF-8821", stock: "✅ в наличии" },
     "OIL-FILTER-VW": { name: "Фильтр масляный", compatible: "VW Golf/Passat", sku: "MANN W712/92", stock: "📦 15 шт" },
     "SPARK-BOSCH": { name: "Свечи зажигания Bosch", compatible: "BMW/Mini", sku: "FR7KPP33+", stock: "🔥 48 шт" },
-    "ALTERNATOR-MB": { name: "Генератор 150A", compatible: "Mercedes W204", sku: "GEN-150-MB", stock: "⏳ под заказ" },
-    "AIR-FILTER": { name: "Воздушный фильтр", compatible: "Универсальный", sku: "AF-2024", stock: "✅ 32 шт" }
+    "ALTERNATOR-MB": { name: "Генератор 150A", compatible: "Mercedes W204", sku: "GEN-150-MB", stock: "⏳ под заказ" }
   };
 
   // ==================== ДАННЫЕ ====================
-  let notes = [];        // { id, text, completed, createdAt }
-  let searchHistory = []; // { qrCode, partName, timestamp }
+  let notes = [];        // { id, text, completed, hidden, createdAt, dueDate, completedAt }
+  let searchHistory = [];
+  let currentFilter = "all";
+  let editingNoteId = null;
+  
+  // Сканер
+  let html5QrCode = null;
+  let isScanning = false;
+  
+  // Голос
+  let recognition = null;
+  let isRecording = false;
 
-  // ==================== ИНИЦИАЛИЗАЦИЯ ====================
+  // ==================== СОХРАНЕНИЕ ====================
+  function saveData() {
+    localStorage.setItem("autoqr_notes", JSON.stringify(notes));
+    localStorage.setItem("autoqr_history", JSON.stringify(searchHistory));
+  }
+
   function loadData() {
     const savedNotes = localStorage.getItem("autoqr_notes");
     if (savedNotes) notes = JSON.parse(savedNotes);
@@ -373,81 +179,174 @@
     renderHistory();
   }
 
-  function saveData() {
-    localStorage.setItem("autoqr_notes", JSON.stringify(notes));
-    localStorage.setItem("autoqr_history", JSON.stringify(searchHistory));
-  }
-
   // ==================== ЗАМЕТКИ ====================
-  function addNote(text) {
+  function addNote(text, dueDate = null) {
     if (!text?.trim()) return;
+    const now = new Date();
     notes.unshift({
       id: Date.now(),
       text: text.trim(),
       completed: false,
-      createdAt: new Date().toISOString()
+      hidden: false,
+      createdAt: now.toISOString(),
+      dueDate: dueDate || null,
+      completedAt: null
     });
     saveData();
     renderNotes();
+    showToast("✅ Заметка добавлена");
   }
 
-  function toggleNote(id) {
+  function updateNote(id, newText) {
     const note = notes.find(n => n.id === id);
-    if (note) note.completed = !note.completed;
-    saveData();
-    renderNotes();
+    if (note && newText?.trim()) {
+      note.text = newText.trim();
+      saveData();
+      renderNotes();
+      showToast("✏️ Заметка обновлена");
+    }
+  }
+
+  function toggleComplete(id) {
+    const note = notes.find(n => n.id === id);
+    if (note) {
+      note.completed = !note.completed;
+      note.completedAt = note.completed ? new Date().toISOString() : null;
+      saveData();
+      renderNotes();
+      showToast(note.completed ? "✅ Отмечено выполнено" : "🔄 Возвращено в активные");
+    }
+  }
+
+  function toggleHide(id) {
+    const note = notes.find(n => n.id === id);
+    if (note) {
+      note.hidden = !note.hidden;
+      saveData();
+      renderNotes();
+      showToast(note.hidden ? "🙈 Заметка скрыта" : "👁️ Заметка показана");
+    }
   }
 
   function deleteNote(id) {
-    notes = notes.filter(n => n.id !== id);
-    saveData();
-    renderNotes();
-  }
-
-  function deleteNotesByWord(word) {
-    if (!word.trim()) return;
-    const before = notes.length;
-    notes = notes.filter(n => !n.text.toLowerCase().includes(word.toLowerCase()));
-    saveData();
-    renderNotes();
-    if (before !== notes.length) showToast(`Удалено ${before - notes.length} заметок`);
-  }
-
-  function clearAllNotes() {
-    if (confirm("Удалить все заметки?")) {
-      notes = [];
+    if (confirm("Удалить заметку?")) {
+      notes = notes.filter(n => n.id !== id);
       saveData();
       renderNotes();
-      showToast("Все заметки удалены");
+      showToast("🗑️ Заметка удалена");
     }
+  }
+
+  function isOverdue(note) {
+    if (note.completed) return false;
+    if (!note.dueDate) return false;
+    return new Date(note.dueDate) < new Date();
+  }
+
+  function getFilteredNotes() {
+    let filtered = [...notes];
+    switch(currentFilter) {
+      case "active": filtered = filtered.filter(n => !n.completed && !n.hidden); break;
+      case "completed": filtered = filtered.filter(n => n.completed); break;
+      case "hidden": filtered = filtered.filter(n => n.hidden); break;
+      case "overdue": filtered = filtered.filter(n => isOverdue(n)); break;
+      default: filtered = filtered.filter(n => !n.hidden || currentFilter === "hidden");
+    }
+    return filtered.sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
   }
 
   function renderNotes() {
     const container = document.getElementById("notesList");
-    if (!notes.length) {
+    const filtered = getFilteredNotes();
+    
+    if (!filtered.length) {
       container.innerHTML = '<div class="empty-state">📭 Нет заметок</div>';
       return;
     }
-    container.innerHTML = notes.map(n => `
-      <div class="note-item ${n.completed ? 'completed' : ''}">
-        <div style="flex:1">
-          <div class="note-text">${escapeHtml(n.text)}</div>
-          <div class="note-date">${formatDate(n.createdAt)}</div>
+    
+    container.innerHTML = filtered.map(n => {
+      const overdue = isOverdue(n);
+      const classes = [];
+      if (n.completed) classes.push("completed");
+      if (overdue && !n.completed) classes.push("overdue");
+      if (n.hidden && currentFilter !== "hidden") return "";
+      
+      return `
+        <div class="note-item ${classes.join(' ')}" data-id="${n.id}">
+          <div class="note-header">
+            <div class="note-text">${escapeHtml(n.text)}</div>
+            <div class="note-actions">
+              <button class="icon-btn edit-note" data-id="${n.id}" title="Редактировать">✏️</button>
+              <button class="icon-btn hide-note" data-id="${n.id}" title="Скрыть">🙈</button>
+              <button class="icon-btn complete-note" data-id="${n.id}" title="Выполнено">${n.completed ? '🔄' : '✅'}</button>
+              <button class="icon-btn delete-note" data-id="${n.id}" title="Удалить">🗑️</button>
+            </div>
+          </div>
+          <div class="note-meta">
+            <span>📅 Создано: ${formatDate(n.createdAt)}</span>
+            ${n.dueDate ? `<span>⏰ Срок: ${formatDate(n.dueDate)}</span>` : ''}
+            ${n.completedAt ? `<span>✅ Выполнено: ${formatDate(n.completedAt)}</span>` : ''}
+            ${overdue && !n.completed ? '<span class="badge badge-overdue">Просрочено</span>' : ''}
+            ${n.completed ? '<span class="badge badge-completed">Выполнено</span>' : ''}
+            ${n.hidden ? '<span class="badge">Скрыто</span>' : ''}
+          </div>
         </div>
-        <div class="note-actions">
-          <button class="icon-btn" onclick="toggleNote(${n.id})">${n.completed ? '🔄' : '✅'}</button>
-          <button class="icon-btn" onclick="deleteNote(${n.id})">🗑️</button>
-        </div>
-      </div>
-    `).join('');
+      `;
+    }).join('');
+    
+    // Вешаем обработчики
+    document.querySelectorAll('.edit-note').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        openEditModal(parseInt(btn.dataset.id));
+      });
+    });
+    document.querySelectorAll('.hide-note').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        toggleHide(parseInt(btn.dataset.id));
+      });
+    });
+    document.querySelectorAll('.complete-note').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        toggleComplete(parseInt(btn.dataset.id));
+      });
+    });
+    document.querySelectorAll('.delete-note').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        deleteNote(parseInt(btn.dataset.id));
+      });
+    });
+  }
+
+  function openEditModal(id) {
+    const note = notes.find(n => n.id === id);
+    if (note) {
+      editingNoteId = id;
+      document.getElementById("editText").value = note.text;
+      document.getElementById("editModal").style.display = "flex";
+    }
+  }
+
+  function closeEditModal() {
+    editingNoteId = null;
+    document.getElementById("editModal").style.display = "none";
+  }
+
+  function saveEdit() {
+    const newText = document.getElementById("editText").value;
+    if (editingNoteId && newText.trim()) {
+      updateNote(editingNoteId, newText);
+    }
+    closeEditModal();
   }
 
   // ==================== ИСТОРИЯ ====================
   function addToHistory(qrCode, partName) {
     searchHistory.unshift({
-      qrCode: qrCode,
-      partName: partName,
-      timestamp: new Date().toISOString()
+      qrCode, partName, timestamp: new Date().toISOString()
     });
     if (searchHistory.length > 50) searchHistory.pop();
     saveData();
@@ -470,7 +369,7 @@
   }
 
   function clearHistory() {
-    if (confirm("Очистить историю поисков?")) {
+    if (confirm("Очистить историю?")) {
       searchHistory = [];
       saveData();
       renderHistory();
@@ -478,10 +377,7 @@
     }
   }
 
-  // ==================== QR СКАНЕР (РАБОТАЕТ!) ====================
-  let html5QrCode = null;
-  let isScanning = false;
-
+  // ==================== QR СКАНЕР ====================
   function startScanner() {
     if (isScanning) {
       showToast("Сканер уже работает");
@@ -496,21 +392,20 @@
     
     const config = { fps: 10, qrbox: { width: 250, height: 250 } };
     
-    html5QrCode.start({ facingMode: "environment" }, config, (decodedText) => {
-      // Успешное сканирование
-      if (isScanning) {
-        processScannedCode(decodedText);
-        stopScanner();
-      }
-    }, (errorMessage) => {
-      // Ошибки игнорируем — это нормально при сканировании
-      console.log(errorMessage);
-    }).then(() => {
+    html5QrCode.start({ facingMode: "environment" }, config,
+      (decodedText) => {
+        if (isScanning) {
+          processScannedCode(decodedText);
+          stopScanner();
+        }
+      },
+      (errorMessage) => { console.log("Сканирование..."); }
+    ).then(() => {
       isScanning = true;
-      showToast("Сканер запущен, наведите на QR-код");
+      showToast("Сканер запущен, наведите на QR");
     }).catch((err) => {
-      console.error("Ошибка запуска сканера:", err);
-      showToast("Ошибка доступа к камере. Проверьте разрешения.");
+      console.error(err);
+      showToast("Ошибка: проверьте разрешения камеры");
     });
   }
 
@@ -543,8 +438,7 @@
     } else {
       html = `
         <div style="border-left: 3px solid #dc2626; padding-left: 12px;">
-          ⚠️ Деталь не найдена<br>
-          Код: ${qrData}
+          ⚠️ Деталь не найдена<br>Код: ${qrData}
         </div>
         <button id="addNoteFromScan" class="btn btn-outline" style="margin-top:12px; width:100%;">📝 Добавить код в заметки</button>
       `;
@@ -556,7 +450,6 @@
     
     document.getElementById("addNoteFromScan")?.addEventListener("click", () => {
       addNote(`QR: ${qrData} - ${part ? part.name : "деталь не найдена"}`);
-      showToast("Добавлено в заметки");
     });
   }
 
@@ -566,17 +459,11 @@
   }
 
   // ==================== ГОЛОС ====================
-  let recognition = null;
-  let isRecording = false;
-
   function initVoice() {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRecognition) {
       const btn = document.getElementById("voiceNoteBtn");
-      if (btn) {
-        btn.disabled = true;
-        btn.textContent = "❌ Голос не поддерживается";
-      }
+      if (btn) { btn.disabled = true; btn.textContent = "❌ Голос не поддерживается"; }
       return;
     }
     recognition = new SpeechRecognition();
@@ -588,6 +475,7 @@
       isRecording = true;
       const btn = document.getElementById("voiceNoteBtn");
       btn.classList.add("recording");
+      btn.style.background = "#dc2626";
       btn.textContent = "🎙️ Говорите...";
     };
     
@@ -595,47 +483,48 @@
       isRecording = false;
       const btn = document.getElementById("voiceNoteBtn");
       btn.classList.remove("recording");
-      btn.textContent = "🎤 Записать голосом";
+      btn.style.background = "";
+      btn.textContent = "🎤 Голосом";
     };
     
     recognition.onerror = () => {
       isRecording = false;
       const btn = document.getElementById("voiceNoteBtn");
       btn.classList.remove("recording");
-      btn.textContent = "🎤 Ошибка, попробуйте снова";
-      setTimeout(() => {
-        if (btn.textContent === "🎤 Ошибка, попробуйте снова") {
-          btn.textContent = "🎤 Записать голосом";
-        }
-      }, 1500);
+      btn.textContent = "🎤 Ошибка";
+      setTimeout(() => { btn.textContent = "🎤 Голосом"; }, 1500);
     };
     
     recognition.onresult = (event) => {
       const text = event.results[0][0].transcript;
-      if (text?.trim()) addNote(text);
+      if (text?.trim()) {
+        // Запрашиваем дату выполнения
+        const dueDate = prompt("Введите срок выполнения (день.месяц.год) или оставьте пустым:", "");
+        let dueDateObj = null;
+        if (dueDate && dueDate.trim()) {
+          const parts = dueDate.split('.');
+          if (parts.length === 3) {
+            dueDateObj = new Date(parts[2], parts[1]-1, parts[0]);
+          }
+        }
+        addNote(text, dueDateObj ? dueDateObj.toISOString() : null);
+      }
     };
   }
 
   function startVoiceNote() {
-    if (!recognition) {
-      alert("Голосовой ввод не поддерживается в этом браузере");
-      return;
-    }
+    if (!recognition) { alert("Голос не поддерживается"); return; }
     if (isRecording) recognition.stop();
     else recognition.start();
   }
 
   // ==================== ЭКСПОРТ ====================
   function exportAllData() {
-    const data = {
-      exportDate: new Date().toISOString(),
-      notes: notes,
-      searchHistory: searchHistory
-    };
+    const data = { exportDate: new Date().toISOString(), notes, searchHistory };
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
-    a.download = `autoqr_data_${new Date().toISOString().slice(0,10)}.json`;
+    a.download = `autoqr_${new Date().toISOString().slice(0,10)}.json`;
     a.href = url;
     a.click();
     URL.revokeObjectURL(url);
@@ -653,7 +542,6 @@
   }
 
   function showToast(msg) {
-    // Простой тост
     const toast = document.createElement('div');
     toast.textContent = msg;
     toast.style.cssText = 'position:fixed; bottom:80px; left:50%; transform:translateX(-50%); background:#333; color:white; padding:8px 16px; border-radius:20px; font-size:12px; z-index:1000;';
@@ -679,15 +567,40 @@
       btn.addEventListener('click', () => switchTab(btn.dataset.tab));
     });
     
+    // Фильтры
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentFilter = btn.dataset.filter;
+        renderNotes();
+      });
+    });
+    
     // Сканер
-    document.getElementById("startScannerBtn").addEventListener("click", startScanner);
-    document.getElementById("stopScannerBtn").addEventListener("click", stopScanner);
-    document.getElementById("manualInputBtn").addEventListener("click", manualInput);
+    document.getElementById("startScannerBtn")?.addEventListener("click", startScanner);
+    document.getElementById("stopScannerBtn")?.addEventListener("click", stopScanner);
+    document.getElementById("manualInputBtn")?.addEventListener("click", manualInput);
     
     // Заметки
-    document.getElementById("voiceNoteBtn").addEventListener("click", startVoiceNote);
-    document.getElementById("deleteByWordBtn").addEventListener("click", () => {
-      const word = document.getElementById("deleteWordInput").value;
-      deleteNotesByWord(word);
-    });
-    document.getElementById("clearAllNotesBtn").addEventListener("click", cl
+    document.getElementById("voiceNoteBtn")?.addEventListener("click", startVoiceNote);
+    
+    // История
+    document.getElementById("clearHistoryBtn")?.addEventListener("click", clearHistory);
+    document.getElementById("exportDataBtn")?.addEventListener("click", exportAllData);
+    
+    // Модалка
+    document.getElementById("saveEditBtn")?.addEventListener("click", saveEdit);
+    document.getElementById("cancelEditBtn")?.addEventListener("click", closeEditModal);
+    window.addEventListener("click", (e) => { if (e.target === document.getElementById("editModal")) closeEditModal(); });
+    
+    // Демо-заметка, если пусто
+    if (notes.length === 0) {
+      setTimeout(() => {
+        if (notes.length === 0) addNote("🔧 Заменить масло через 5000 км");
+      }, 500);
+    }
+  });
+</script>
+</body>
+</html>
