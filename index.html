@@ -3,471 +3,772 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
-  <title>AutoQR — Сканер автодеталей</title>
+  <title>AutoQR v1.2 — Сканер автодеталей</title>
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#1a1a2e">
   <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+  <script>
+    window.addEventListener('error', function(e) {
+      if (e.filename && e.filename.includes('html5-qrcode')) {
+        console.error('❌ Ошибка загрузки html5-qrcode:', e);
+      }
+    });
+  </script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; font-family: system-ui, -apple-system, 'Inter', sans-serif; }
     body { background: #0f0f1a; min-height: 100vh; color: #fff; }
     .app { max-width: 500px; margin: 0 auto; background: #1a1a2e; min-height: 100vh; }
-    .header { background: linear-gradient(135deg, #16213e, #1a1a2e); padding: 20px; text-align: center; border-bottom: 1px solid #2d3561; }
-    .header h1 { font-size: 24px; background: linear-gradient(135deg, #fff, #5bc0ff); -webkit-background-clip: text; background-clip: text; color: transparent; }
-    .header p { font-size: 12px; color: #8e9bb5; margin-top: 4px; }
+
+    /* Header */
+    .header { background: linear-gradient(135deg, #16213e, #1a1a2e); padding: 16px 20px; text-align: center; border-bottom: 1px solid #2d3561; }
+    .header h1 { font-size: 22px; background: linear-gradient(135deg, #fff, #5bc0ff); -webkit-background-clip: text; background-clip: text; color: transparent; }
+    .header p { font-size: 11px; color: #8e9bb5; margin-top: 3px; }
+    .version-badge { display: inline-block; font-size: 10px; background: #2d3561; color: #5bc0ff; padding: 2px 8px; border-radius: 10px; margin-top: 4px; }
+
+    /* Nav */
     .nav { display: flex; background: #16213e; border-bottom: 1px solid #2d3561; }
-    .nav-btn { flex: 1; padding: 14px; background: none; border: none; color: #8e9bb5; font-size: 14px; font-weight: 500; cursor: pointer; }
-    .nav-btn.active { color: #5bc0ff; border-bottom: 2px solid #5bc0ff; background: rgba(91,192,255,0.1); }
-    .content { padding: 16px; padding-bottom: 80px; }
+    .nav-btn { flex: 1; padding: 13px; background: none; border: none; color: #8e9bb5; font-size: 13px; font-weight: 500; cursor: pointer; transition: 0.15s; }
+    .nav-btn.active { color: #5bc0ff; border-bottom: 2px solid #5bc0ff; background: rgba(91,192,255,0.08); }
+
+    /* Content */
+    .content { padding: 14px; padding-bottom: 80px; }
     .tab { display: none; }
     .tab.active { display: block; }
-    .card { background: #16213e; border-radius: 20px; padding: 16px; margin-bottom: 16px; border: 1px solid #2d3561; }
-    .card-title { font-size: 18px; font-weight: 600; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
-    .btn { background: #2d3561; border: none; padding: 12px 16px; border-radius: 12px; font-size: 14px; font-weight: 500; color: white; cursor: pointer; transition: 0.2s; }
+
+    /* Cards */
+    .card { background: #16213e; border-radius: 18px; padding: 14px; margin-bottom: 14px; border: 1px solid #2d3561; }
+    .card-title { font-size: 16px; font-weight: 600; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+
+    /* Buttons */
+    .btn { background: #2d3561; border: none; padding: 11px 14px; border-radius: 12px; font-size: 13px; font-weight: 500; color: white; cursor: pointer; transition: 0.15s; }
+    .btn:active { opacity: 0.8; transform: scale(0.98); }
     .btn-primary { background: #5bc0ff; color: #1a1a2e; }
     .btn-success { background: #10b981; }
     .btn-danger { background: #dc2626; }
     .btn-outline { background: transparent; border: 1px solid #2d3561; }
-    .btn-sm { padding: 6px 12px; font-size: 12px; }
+    .btn-sm { padding: 6px 10px; font-size: 12px; }
+    .btn-toggle-scan { width: 100%; padding: 12px; font-size: 14px; font-weight: 600; border-radius: 14px; border: none; cursor: pointer; transition: 0.2s; background: #5bc0ff; color: #1a1a2e; }
+    .btn-toggle-scan.scanning { background: #dc2626; color: #fff; animation: pulse 1.5s infinite; }
     .w-100 { width: 100%; margin-top: 8px; }
+
+    /* Layout helpers */
     .flex-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
     .flex-between { display: flex; justify-content: space-between; align-items: center; }
+
+    /* Inputs */
     input { background: #0f0f1a; border: 1px solid #2d3561; padding: 10px 12px; border-radius: 12px; color: white; font-size: 14px; outline: none; flex: 1; }
-    #qr-reader { width: 100%; border-radius: 16px; overflow: hidden; background: #000; }
+    input:focus { border-color: #5bc0ff; }
+
+    /* Scanner */
+    #qr-reader { width: 100%; border-radius: 14px; overflow: hidden; background: #000; min-height: 40px; }
     #qr-reader video { width: 100%; height: auto; }
+    .scan-hint { font-size: 11px; color: #8e9bb5; text-align: center; padding: 6px 0; }
+    .scan-status { font-size: 12px; text-align: center; padding: 5px 10px; border-radius: 20px; margin-top: 6px; background: #2d3561; color: #8e9bb5; }
+    .scan-status.active { background: rgba(91,192,255,0.15); color: #5bc0ff; }
+
+    /* Scan result */
     .scan-result { background: #0f0f1a; border-radius: 12px; padding: 12px; margin-top: 12px; display: none; }
-    .found-part { border-left: 3px solid #10b981; padding-left: 12px; }
-    .not-found { border-left: 3px solid #dc2626; padding-left: 12px; }
-    .filter-buttons { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
-    .filter-btn { padding: 6px 12px; border-radius: 20px; background: #2d3561; border: none; color: #8e9bb5; font-size: 12px; cursor: pointer; }
-    .filter-btn.active { background: #5bc0ff; color: #1a1a2e; }
-    .notes-list { max-height: 500px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
-    .note-item { background: #0f0f1a; border-radius: 16px; padding: 12px; border: 1px solid #2d3561; }
-    .note-item.completed { opacity: 0.6; background: #0a0a12; }
-    .note-item.overdue { border-left: 3px solid #dc2626; }
-    .note-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
-    .note-text { font-size: 14px; font-weight: 500; flex: 1; }
-    .note-meta { font-size: 10px; color: #6c7a9e; margin-top: 6px; display: flex; gap: 12px; flex-wrap: wrap; }
-    .note-actions { display: flex; gap: 8px; }
-    .icon-btn { background: none; border: none; font-size: 18px; cursor: pointer; padding: 4px; color: #8e9bb5; }
-    .history-item { background: #0f0f1a; border-radius: 12px; padding: 10px; margin-bottom: 8px; border-left: 3px solid #5bc0ff; }
-    .empty-state { text-align: center; padding: 40px 20px; color: #6c7a9e; }
-    .test-buttons { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
-    .test-btn { background: #2d3561; padding: 6px 10px; border-radius: 16px; font-size: 10px; cursor: pointer; border: none; color: white; }
-    .badge { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 10px; background: #2d3561; }
-    .badge-overdue { background: #dc2626; }
-    .badge-completed { background: #10b981; }
-    .recording { background: #dc2626 !important; animation: pulse 1s infinite; }
-    @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
+    .found-part { border-left: 3px solid #10b981; padding-left: 12px; border-radius: 0; }
+    .not-found { border-left: 3px solid #dc2626; padding-left: 12px; border-radius: 0; }
+    .part-name { font-size: 15px; font-weight: 600; margin-bottom: 6px; }
+    .part-row { font-size: 12px; color: #a0aec0; margin-top: 3px; }
+
+    /* Voice hint */
+    .voice-hint { font-size: 11px; color: #5bc0ff; text-align: center; min-height: 16px; margin-bottom: 6px; transition: 0.3s; }
+
+    /* Filter buttons */
+    .filter-buttons { display: flex; gap: 6px; margin-bottom: 14px; flex-wrap: wrap; }
+    .filter-btn { padding: 5px 11px; border-radius: 20px; background: #2d3561; border: none; color: #8e9bb5; font-size: 11px; cursor: pointer; transition: 0.15s; }
+    .filter-btn.active { background: #5bc0ff; color: #1a1a2e; font-weight: 600; }
+
+    /* Notes */
+    .notes-list { max-height: 520px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; }
+    .note-item { background: #0f0f1a; border-radius: 14px; padding: 11px; border: 1px solid #2d3561; transition: 0.2s; }
+    .note-item.completed { opacity: 0.55; }
+    .note-item.overdue { border-left: 3px solid #dc2626; border-radius: 0 14px 14px 0; }
+    .note-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px; }
+    .note-text { font-size: 13px; font-weight: 500; flex: 1; line-height: 1.5; }
+    .note-text.done { text-decoration: line-through; color: #6c7a9e; }
+    .note-meta { font-size: 10px; color: #6c7a9e; margin-top: 4px; display: flex; gap: 10px; flex-wrap: wrap; }
+    .note-actions { display: flex; gap: 4px; flex-shrink: 0; }
+    .icon-btn { background: #2d3561; border: none; font-size: 14px; cursor: pointer; padding: 5px 8px; border-radius: 8px; color: #8e9bb5; transition: 0.15s; }
+    .icon-btn:hover { background: #3d4a71; }
+    .icon-btn.complete-btn { color: #10b981; }
+    .icon-btn.delete-btn { color: #dc2626; }
+
+    /* Badges */
+    .badge { display: inline-block; padding: 1px 7px; border-radius: 10px; font-size: 10px; background: #2d3561; }
+    .badge-overdue { background: rgba(220,38,38,0.2); color: #f87171; }
+    .badge-completed { background: rgba(16,185,129,0.2); color: #34d399; }
+
+    /* History */
+    .history-item { background: #0f0f1a; border-radius: 10px; padding: 10px; margin-bottom: 7px; border-left: 3px solid #5bc0ff; border-radius: 0 10px 10px 0; }
+    .history-code { font-size: 11px; color: #6c7a9e; margin-top: 2px; font-family: monospace; }
+    .history-time { font-size: 10px; color: #4a5568; margin-top: 2px; }
+
+    /* Empty state */
+    .empty-state { text-align: center; padding: 36px 20px; color: #6c7a9e; font-size: 13px; }
+
+    /* Test buttons */
+    .test-section { margin-top: 14px; }
+    .test-label { font-size: 11px; color: #6c7a9e; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+    .test-buttons { display: flex; gap: 6px; flex-wrap: wrap; }
+    .test-btn { background: #1e2a45; padding: 5px 10px; border-radius: 14px; font-size: 11px; cursor: pointer; border: 1px solid #2d3561; color: #8e9bb5; transition: 0.15s; }
+    .test-btn:hover { background: #2d3561; color: #fff; }
+
+    /* Animations */
+    .recording { background: #dc2626 !important; color: #fff !important; animation: pulse 1s infinite; }
+    @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.65; } 100% { opacity: 1; } }
+
+    /* Divider */
+    .divider { height: 1px; background: #2d3561; margin: 12px 0; }
+
+    /* Toast */
+    .toast { position: fixed; bottom: 72px; left: 50%; transform: translateX(-50%); background: #2d3561; color: white; padding: 8px 16px; border-radius: 20px; font-size: 12px; z-index: 1000; white-space: nowrap; pointer-events: none; }
   </style>
 </head>
 <body>
 <div class="app">
   <div class="header">
     <h1>🔧 AutoQR</h1>
-    <p>Сканер деталей + голосовые заметки + голосовая дата</p>
+    <p>Сканер деталей • Голосовые заметки</p>
+    <div class="version-badge">v1.2</div>
   </div>
 
   <div class="nav">
     <button class="nav-btn active" data-tab="scan">📷 Сканер</button>
-    <button class="nav-btn" data-tab="notes">📝 Заметки</button>
+    <button class="nav-btn" data-tab="notes">📝 Заметки <span id="notesCount"></span></button>
     <button class="nav-btn" data-tab="history">📜 История</button>
   </div>
 
   <div class="content">
-    <!-- Вкладка Сканер -->
+
+    <!-- ===== СКАНЕР ===== -->
     <div id="tab-scan" class="tab active">
       <div class="card">
-        <div class="card-title">📷 Сканирование QR</div>
+        <div class="card-title">📷 Сканер QR и штрих-кодов</div>
+
         <div id="qr-reader"></div>
-        <div id="scan-result" class="scan-result"></div>
-        <div class="flex-row">
-          <button id="startScannerBtn" class="btn btn-primary">▶️ Запустить сканер</button>
-          <button id="stopScannerBtn" class="btn btn-outline">⏹️ Остановить</button>
-        </div>
-        <button id="manualInputBtn" class="btn btn-outline w-100">⌨️ Ввести код вручную</button>
-        
-        <div style="margin-top: 16px;">
-          <div class="card-title" style="font-size: 14px;">🧪 Тестовые коды (нажми для проверки)</div>
+        <div id="scanStatus" class="scan-status">Нажмите «Запустить» для сканирования</div>
+
+        <!-- Toggle-кнопка одна вместо двух -->
+        <button id="toggleScanBtn" class="btn-toggle-scan" style="margin-top: 10px;">
+          ▶ Запустить сканер
+        </button>
+
+        <button id="manualInputBtn" class="btn btn-outline w-100" style="margin-top: 8px;">
+          ⌨️ Ввести артикул вручную
+        </button>
+
+        <div id="scanResult" class="scan-result"></div>
+
+        <!-- Тестовые коды — подписаны явно -->
+        <div class="test-section">
+          <div class="test-label">
+            🧪 <strong>Демо-коды</strong> — нажми для теста без камеры
+          </div>
           <div class="test-buttons">
-            <button class="test-btn" data-code="A0940427401">Тормозные колодки MB</button>
-            <button class="test-btn" data-code="MANN-FILTER-W71292">Масляный фильтр MANN</button>
+            <button class="test-btn" data-code="A0940427401">Колодки MB</button>
+            <button class="test-btn" data-code="MANN-FILTER-W71292">Фильтр MANN</button>
             <button class="test-btn" data-code="BOSCH-0241234567">Свечи Bosch</button>
             <button class="test-btn" data-code="TOYOTA-044650K180">Колодки Toyota</button>
             <button class="test-btn" data-code="VW-06J115403Q">Фильтр VW</button>
+            <button class="test-btn" data-code="8809746747826">Стойка EX96407819</button>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Вкладка Заметки -->
+    <!-- ===== ЗАМЕТКИ ===== -->
     <div id="tab-notes" class="tab">
       <div class="card">
-        <div class="flex-between">
-          <div class="card-title">🎙️ Мои заметки</div>
-          <button id="voiceNoteBtn" class="btn btn-primary btn-sm">🎤 Голосом (текст+дата)</button>
+        <div class="flex-between" style="margin-bottom: 10px;">
+          <div class="card-title" style="margin-bottom: 0;">📝 Заметки</div>
+          <div style="text-align: right;">
+            <div id="voiceHint" class="voice-hint"></div>
+            <button id="voiceNoteBtn" class="btn btn-primary btn-sm">🎤 Добавить голосом</button>
+          </div>
         </div>
+
+        <!-- Быстрое добавление текстом -->
+        <div class="flex-row" style="margin-bottom: 12px;">
+          <input id="quickNoteInput" type="text" placeholder="Текст заметки..." />
+          <button id="quickNoteBtn" class="btn btn-success btn-sm">+ Добавить</button>
+        </div>
+
         <div class="filter-buttons">
           <button class="filter-btn active" data-filter="all">Все</button>
           <button class="filter-btn" data-filter="active">Активные</button>
           <button class="filter-btn" data-filter="completed">Выполненные</button>
           <button class="filter-btn" data-filter="overdue">Просроченные</button>
         </div>
-        <div id="notesList" class="notes-list"><div class="empty-state">📭 Нет заметок</div></div>
+
+        <div id="notesList" class="notes-list">
+          <div class="empty-state">📭 Нет заметок</div>
+        </div>
       </div>
     </div>
 
-    <!-- Вкладка История -->
+    <!-- ===== ИСТОРИЯ ===== -->
     <div id="tab-history" class="tab">
       <div class="card">
-        <div class="card-title">📜 История поисков</div>
-        <div id="historyList"><div class="empty-state">📭 Нет истории</div></div>
+        <div class="card-title">📜 История сканирований</div>
+        <div id="historyList"><div class="empty-state">📭 История пуста</div></div>
+        <div class="divider"></div>
         <button id="clearHistoryBtn" class="btn btn-outline w-100">🧹 Очистить историю</button>
-        <button id="exportDataBtn" class="btn btn-primary w-100">💾 Экспорт данных</button>
+        <button id="exportDataBtn" class="btn btn-primary w-100">💾 Экспорт данных (JSON)</button>
       </div>
     </div>
+
   </div>
 </div>
 
 <script>
-  // ==================== БАЗА ДЕТАЛЕЙ ====================
-  const partsDB = {
-    "A0940427401": { name: "Тормозные колодки передние", compatible: "Mercedes-Benz W212/W213", sku: "A0940427401", stock: "✅ в наличии", price: "4 890 ₽" },
-    "MANN-FILTER-W71292": { name: "Масляный фильтр MANN", compatible: "VW Golf/Passat/Audi A3/A4", sku: "W712/92", stock: "📦 45 шт", price: "890 ₽" },
-    "BOSCH-0241234567": { name: "Свечи зажигания Bosch", compatible: "BMW 3/5 серии, Mini Cooper", sku: "FR7KPP33+", stock: "🔥 128 шт", price: "1 200 ₽/шт" },
-    "TOYOTA-044650K180": { name: "Колодки тормозные передние", compatible: "Toyota Camry XV50, RAV4", sku: "04465-0K180", stock: "✅ 32 шт", price: "5 200 ₽" },
-    "VW-06J115403Q": { name: "Масляный фильтр", compatible: "VW/Audi 2.0 TSI/TFSI", sku: "06J115403Q", stock: "📦 18 шт", price: "1 150 ₽" }
-  };
+// ==================== БАЗА ДЕТАЛЕЙ ====================
+const partsDB = {
+  "A0940427401":        { name: "Тормозные колодки передние", compatible: "Mercedes-Benz W212/W213", sku: "A0940427401",    stock: "✅ в наличии", price: "4 890 ₽" },
+  "MANN-FILTER-W71292": { name: "Масляный фильтр MANN",       compatible: "VW Golf/Passat, Audi A3/A4", sku: "W712/92",    stock: "📦 45 шт",    price: "890 ₽" },
+  "BOSCH-0241234567":   { name: "Свечи зажигания Bosch",      compatible: "BMW 3/5 серии, Mini Cooper", sku: "FR7KPP33+",  stock: "🔥 128 шт",   price: "1 200 ₽/шт" },
+  "TOYOTA-044650K180":  { name: "Колодки тормозные передние", compatible: "Toyota Camry XV50, RAV4",   sku: "04465-0K180", stock: "✅ 32 шт",    price: "5 200 ₽" },
+  "VW-06J115403Q":      { name: "Масляный фильтр",            compatible: "VW/Audi 2.0 TSI/TFSI",     sku: "06J115403Q",  stock: "📦 18 шт",    price: "1 150 ₽" },
+  // Деталь с фото: Strut Ass'y EX96407819 — два ключа (артикул + EAN-13)
+  "EX96407819":         { name: "Стойка амортизатора (Strut Ass'y)", compatible: "Hyundai/Kia", sku: "EX96407819", stock: "✅ в наличии", price: "— ₽" },
+  "8809746747826":      { name: "Стойка амортизатора (Strut Ass'y)", compatible: "Hyundai/Kia", sku: "EX96407819", stock: "✅ в наличии", price: "— ₽" }
+};
 
-  // ==================== ДАННЫЕ ====================
-  let notes = [];
-  let searchHistory = [];
-  let currentFilter = "all";
-  
-  let html5QrCode = null;
-  let isScanning = false;
-  
-  let recognition = null;
-  let isRecording = false;
-  let pendingVoiceText = null; // для двухэтапного голоса (текст → дата)
+// ==================== СОСТОЯНИЕ ====================
+let notes = [];
+let searchHistory = [];
+let currentFilter = "all";
+let html5QrCode = null;
+let isScanning = false;
+let recognition = null;
+let isRecording = false;
+let pendingVoiceText = null;
 
-  // ==================== СОХРАНЕНИЕ ====================
-  function saveData() {
-    localStorage.setItem("autoqr_notes", JSON.stringify(notes));
-    localStorage.setItem("autoqr_history", JSON.stringify(searchHistory));
-  }
+// ==================== ХРАНИЛИЩЕ ====================
+function saveData() {
+  localStorage.setItem("autoqr_notes",   JSON.stringify(notes));
+  localStorage.setItem("autoqr_history", JSON.stringify(searchHistory));
+}
 
-  function loadData() {
-    const savedNotes = localStorage.getItem("autoqr_notes");
-    if (savedNotes) notes = JSON.parse(savedNotes);
-    const savedHistory = localStorage.getItem("autoqr_history");
-    if (savedHistory) searchHistory = JSON.parse(savedHistory);
-    renderNotes();
-    renderHistory();
-  }
+function loadData() {
+  try { notes         = JSON.parse(localStorage.getItem("autoqr_notes")   || "[]"); } catch(e) { notes = []; }
+  try { searchHistory = JSON.parse(localStorage.getItem("autoqr_history") || "[]"); } catch(e) { searchHistory = []; }
+  renderNotes();
+  renderHistory();
+  updateNotesCount();
+}
 
-  // ==================== ПАРСИНГ ДАТЫ ИЗ ГОЛОСА ====================
-  function parseDateFromVoice(dateText) {
-    const text = dateText.toLowerCase().trim();
-    const now = new Date();
-    
-    // Сегодня / завтра / послезавтра
-    if (text.includes('сегодня')) return new Date(now.setHours(0,0,0,0));
-    if (text.includes('завтра')) return new Date(now.setDate(now.getDate() + 1));
-    if (text.includes('послезавтра')) return new Date(now.setDate(now.getDate() + 2));
-    
-    // Числа: "25 декабря", "15.06", "2025-12-31"
-    const dayMatch = text.match(/(\d{1,2})[\s\.-](\d{1,2})/);
-    if (dayMatch) {
-      return new Date(now.getFullYear(), parseInt(dayMatch[2])-1, parseInt(dayMatch[1]));
-    }
-    
-    // "через 3 дня"
-    const throughMatch = text.match(/через\s+(\d+)\s+дня?/);
-    if (throughMatch) {
-      return new Date(now.setDate(now.getDate() + parseInt(throughMatch[1])));
-    }
-    
-    return null;
-  }
+// ==================== ПАРСИНГ ДАТЫ (FIX: не мутируем now) ====================
+function parseDateFromVoice(dateText) {
+  const text = dateText.toLowerCase().trim();
 
-  // ==================== ЗАМЕТКИ ====================
-  function addNote(text, dueDate = null) {
-    if (!text?.trim()) return;
-    notes.unshift({
-      id: Date.now(),
-      text: text.trim(),
-      completed: false,
-      createdAt: new Date().toISOString(),
-      completedAt: null,
-      dueDate: dueDate ? dueDate.toISOString() : null
-    });
-    saveData();
-    renderNotes();
-    showToast("✅ Заметка добавлена" + (dueDate ? " с датой выполнения" : ""));
-  }
+  if (text.includes("сегодня"))     { const d = new Date(); d.setHours(23,59,0,0); return d; }
+  if (text.includes("послезавтра")) { const d = new Date(); d.setDate(d.getDate()+2); d.setHours(23,59,0,0); return d; }
+  if (text.includes("завтра"))      { const d = new Date(); d.setDate(d.getDate()+1); d.setHours(23,59,0,0); return d; }
 
-  function toggleComplete(id) {
-    const note = notes.find(n => n.id === id);
-    if (note) {
-      note.completed = !note.completed;
-      note.completedAt = note.completed ? new Date().toISOString() : null;
-      saveData();
-      renderNotes();
-      showToast(note.completed ? "✅ Выполнено" : "🔄 Возвращено");
+  // "через N дней/дня/день"
+  const through = text.match(/через\s+(\d+)\s+дн/);
+  if (through) { const d = new Date(); d.setDate(d.getDate() + parseInt(through[1])); d.setHours(23,59,0,0); return d; }
+
+  // "DD.MM" или "DD MM"
+  const dmy = text.match(/(\d{1,2})[.\s-](\d{1,2})/);
+  if (dmy) { const d = new Date(); d.setMonth(parseInt(dmy[2])-1); d.setDate(parseInt(dmy[1])); d.setHours(23,59,0,0); return d; }
+
+  // Месяц словом: "25 декабря"
+  const months = { январ:0, феврал:1, март:2, апрел:3, май:4, маи:4, июн:5, июл:6, август:7, сентябр:8, октябр:9, ноябр:10, декабр:11 };
+  for (const [key, idx] of Object.entries(months)) {
+    if (text.includes(key)) {
+      const numMatch = text.match(/(\d{1,2})/);
+      if (numMatch) { const d = new Date(); d.setMonth(idx); d.setDate(parseInt(numMatch[1])); d.setHours(23,59,0,0); return d; }
     }
   }
 
-  function deleteNote(id) {
-    if (confirm("Удалить заметку?")) {
-      notes = notes.filter(n => n.id !== id);
-      saveData();
-      renderNotes();
-      showToast("🗑️ Заметка удалена");
-    }
+  return null;
+}
+
+// ==================== ЗАМЕТКИ ====================
+function addNote(text, dueDate = null) {
+  if (!text?.trim()) return;
+  notes.unshift({
+    id: Date.now(),
+    text: text.trim(),
+    completed: false,
+    createdAt: new Date().toISOString(),
+    completedAt: null,
+    dueDate: dueDate ? dueDate.toISOString() : null
+  });
+  saveData();
+  renderNotes();
+  updateNotesCount();
+  showToast("✅ Заметка добавлена" + (dueDate ? ": срок " + formatDateShort(dueDate) : ""));
+}
+
+function toggleComplete(id) {
+  const note = notes.find(n => n.id === id);
+  if (!note) return;
+  note.completed = !note.completed;
+  note.completedAt = note.completed ? new Date().toISOString() : null;
+  saveData();
+  renderNotes();
+  updateNotesCount();
+  showToast(note.completed ? "✅ Выполнено" : "🔄 Возвращено в активные");
+}
+
+function deleteNote(id) {
+  if (!confirm("Удалить заметку?")) return;
+  notes = notes.filter(n => n.id !== id);
+  saveData();
+  renderNotes();
+  updateNotesCount();
+  showToast("🗑️ Удалено");
+}
+
+function isOverdue(note) {
+  return !note.completed && note.dueDate && new Date(note.dueDate) < new Date();
+}
+
+function getFilteredNotes() {
+  let f = [...notes];
+  if (currentFilter === "active")    f = f.filter(n => !n.completed && !isOverdue(n));
+  if (currentFilter === "completed") f = f.filter(n => n.completed);
+  if (currentFilter === "overdue")   f = f.filter(n => isOverdue(n));
+  return f.sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
+}
+
+function renderNotes() {
+  const container = document.getElementById("notesList");
+  const filtered = getFilteredNotes();
+
+  if (!filtered.length) {
+    const labels = { all:"Нет заметок", active:"Нет активных", completed:"Нет выполненных", overdue:"Нет просроченных" };
+    container.innerHTML = `<div class="empty-state">📭 ${labels[currentFilter]}</div>`;
+    return;
   }
 
-  function isOverdue(note) {
-    if (note.completed) return false;
-    if (!note.dueDate) return false;
-    return new Date(note.dueDate) < new Date();
-  }
-
-  function getFilteredNotes() {
-    let filtered = [...notes];
-    if (currentFilter === "active") filtered = filtered.filter(n => !n.completed && !isOverdue(n));
-    if (currentFilter === "completed") filtered = filtered.filter(n => n.completed);
-    if (currentFilter === "overdue") filtered = filtered.filter(n => isOverdue(n) && !n.completed);
-    return filtered.sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
-  }
-
-  function renderNotes() {
-    const container = document.getElementById("notesList");
-    const filtered = getFilteredNotes();
-    if (!filtered.length) {
-      container.innerHTML = '<div class="empty-state">📭 Нет заметок</div>';
-      return;
-    }
-    container.innerHTML = filtered.map(n => {
-      const overdue = isOverdue(n);
-      return `
-        <div class="note-item ${n.completed ? 'completed' : ''} ${overdue ? 'overdue' : ''}">
-          <div class="note-header">
-            <div class="note-text">${escapeHtml(n.text)}</div>
-            <div class="note-actions">
-              <button class="icon-btn complete-note" data-id="${n.id}">${n.completed ? '🔄' : '✅'}</button>
-              <button class="icon-btn delete-note" data-id="${n.id}">🗑️</button>
-            </div>
-          </div>
-          <div class="note-meta">
-            <span>📅 Создано: ${formatDate(n.createdAt)}</span>
-            ${n.dueDate ? `<span>⏰ Срок: ${formatDate(n.dueDate)} ${overdue && !n.completed ? '<span class="badge badge-overdue">Просрочено</span>' : ''}</span>` : ''}
-            ${n.completedAt ? `<span>✅ Выполнено: ${formatDate(n.completedAt)}</span>` : ''}
+  container.innerHTML = filtered.map(n => {
+    const overdue = isOverdue(n);
+    const dueBadge = overdue && !n.completed ? `<span class="badge badge-overdue">просрочено</span>` : "";
+    return `
+      <div class="note-item ${n.completed ? "completed" : ""} ${overdue ? "overdue" : ""}">
+        <div class="note-header">
+          <div class="note-text ${n.completed ? "done" : ""}">${escapeHtml(n.text)}</div>
+          <div class="note-actions">
+            <button class="icon-btn complete-btn complete-note" data-id="${n.id}"
+              title="${n.completed ? "Вернуть в активные" : "Отметить выполненным"}">
+              ${n.completed ? "🔄" : "✅"}
+            </button>
+            <button class="icon-btn delete-btn delete-note" data-id="${n.id}" title="Удалить заметку">🗑️</button>
           </div>
         </div>
-      `;
-    }).join('');
-    document.querySelectorAll('.complete-note').forEach(btn => btn.addEventListener('click', () => toggleComplete(parseInt(btn.dataset.id))));
-    document.querySelectorAll('.delete-note').forEach(btn => btn.addEventListener('click', () => deleteNote(parseInt(btn.dataset.id))));
-  }
-
-  // ==================== ИСТОРИЯ ====================
-  function addToHistory(qrCode, partName) {
-    searchHistory.unshift({ qrCode, partName, timestamp: new Date().toISOString() });
-    if (searchHistory.length > 50) searchHistory.pop();
-    saveData();
-    renderHistory();
-  }
-
-  function renderHistory() {
-    const container = document.getElementById("historyList");
-    if (!searchHistory.length) { container.innerHTML = '<div class="empty-state">📭 Нет истории</div>'; return; }
-    container.innerHTML = searchHistory.map(h => `
-      <div class="history-item">
-        <div><strong>${escapeHtml(h.partName)}</strong></div>
-        <div class="history-code">📦 QR: ${escapeHtml(h.qrCode)}</div>
-        <div class="history-time">🕐 ${formatDate(h.timestamp)}</div>
+        <div class="note-meta">
+          <span>📅 ${formatDate(n.createdAt)}</span>
+          ${n.dueDate ? `<span>⏰ до ${formatDate(n.dueDate)} ${dueBadge}</span>` : ""}
+          ${n.completedAt ? `<span class="badge badge-completed">✓ ${formatDate(n.completedAt)}</span>` : ""}
+        </div>
       </div>
-    `).join('');
+    `;
+  }).join("");
+
+  container.querySelectorAll(".complete-note").forEach(btn =>
+    btn.addEventListener("click", () => toggleComplete(parseInt(btn.dataset.id))));
+  container.querySelectorAll(".delete-note").forEach(btn =>
+    btn.addEventListener("click", () => deleteNote(parseInt(btn.dataset.id))));
+}
+
+function updateNotesCount() {
+  const active = notes.filter(n => !n.completed).length;
+  const el = document.getElementById("notesCount");
+  if (el) el.textContent = active > 0 ? `(${active})` : "";
+}
+
+// ==================== ИСТОРИЯ ====================
+function addToHistory(qrCode, partName) {
+  searchHistory.unshift({ qrCode, partName, timestamp: new Date().toISOString() });
+  if (searchHistory.length > 100) searchHistory.pop();
+  saveData();
+  renderHistory();
+}
+
+function renderHistory() {
+  const container = document.getElementById("historyList");
+  if (!searchHistory.length) { container.innerHTML = '<div class="empty-state">📭 История пуста</div>'; return; }
+  container.innerHTML = searchHistory.map(h => `
+    <div class="history-item">
+      <div style="font-size:13px; font-weight:500;">${escapeHtml(h.partName)}</div>
+      <div class="history-code">QR/ШК: ${escapeHtml(h.qrCode)}</div>
+      <div class="history-time">🕐 ${formatDate(h.timestamp)}</div>
+    </div>
+  `).join("");
+}
+
+function clearHistory() {
+  if (!confirm("Очистить всю историю?")) return;
+  searchHistory = [];
+  saveData();
+  renderHistory();
+  showToast("История очищена");
+}
+
+function exportData() {
+  const data = { app:"AutoQR", version:"1.2", exportDate: new Date().toISOString(), notes, searchHistory };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.download = `autoqr_${new Date().toISOString().slice(0,10)}.json`;
+  a.href = url;
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast("💾 Данные экспортированы");
+}
+
+// ==================== ПОИСК ДЕТАЛИ ====================
+function findPartByQR(raw) {
+  const code = raw.trim();
+  if (partsDB[code]) return partsDB[code];
+  // Попытка найти по подстроке (URL с артикулом в конце)
+  for (const [key, part] of Object.entries(partsDB)) {
+    if (code.includes(key) || key.includes(code)) return part;
   }
+  return null;
+}
 
-  function clearHistory() {
-    if (confirm("Очистить историю?")) { searchHistory = []; saveData(); renderHistory(); showToast("История очищена"); }
+function processScannedCode(raw) {
+  const resultDiv = document.getElementById("scanResult");
+  const part = findPartByQR(raw);
+
+  if (part) {
+    resultDiv.innerHTML = `
+      <div class="found-part">
+        <div class="part-name">🔩 ${escapeHtml(part.name)}</div>
+        <div class="part-row">📌 Артикул: <strong>${escapeHtml(part.sku)}</strong></div>
+        <div class="part-row">🚗 ${escapeHtml(part.compatible)}</div>
+        <div class="part-row">${escapeHtml(part.stock)} &nbsp;💰 ${escapeHtml(part.price)}</div>
+      </div>
+      <div class="flex-row" style="margin-top:10px;">
+        <button id="addNoteFromScan" class="btn btn-success btn-sm">📝 В заметки</button>
+        <button id="copyArticle" class="btn btn-outline btn-sm">📋 Скопировать артикул</button>
+      </div>
+    `;
+    addToHistory(raw, part.name);
+    showToast("✅ Найдено: " + part.name);
+    document.getElementById("addNoteFromScan")?.addEventListener("click", () => {
+      addNote(`🔧 ${part.name} — ${part.sku} — ${part.price}`);
+      switchTab("notes");
+    });
+    document.getElementById("copyArticle")?.addEventListener("click", () => {
+      navigator.clipboard.writeText(part.sku).then(() => showToast("Артикул скопирован"));
+    });
+  } else {
+    resultDiv.innerHTML = `
+      <div class="not-found">
+        <div class="part-name">⚠️ Деталь не найдена</div>
+        <div class="part-row">Код: <code>${escapeHtml(raw)}</code></div>
+      </div>
+      <div class="flex-row" style="margin-top:10px;">
+        <button id="addCodeToNotes" class="btn btn-outline btn-sm">📝 Сохранить код в заметки</button>
+        <button id="copyCode" class="btn btn-outline btn-sm">📋 Скопировать код</button>
+      </div>
+    `;
+    addToHistory(raw, "Неизвестная деталь");
+    showToast("⚠️ Деталь не найдена в базе");
+    document.getElementById("addCodeToNotes")?.addEventListener("click", () => {
+      addNote(`❓ Неизвестная деталь: ${raw}`);
+      switchTab("notes");
+    });
+    document.getElementById("copyCode")?.addEventListener("click", () => {
+      navigator.clipboard.writeText(raw).then(() => showToast("Код скопирован"));
+    });
   }
+  resultDiv.style.display = "block";
+}
 
-  function exportData() {
-    const data = { exportDate: new Date().toISOString(), notes, searchHistory };
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.download = `autoqr_${new Date().toISOString().slice(0,10)}.json`;
-    a.href = url;
-    a.click();
-    URL.revokeObjectURL(url);
-    showToast("Данные экспортированы");
+// ==================== СКАНЕР (FIX: toggle + барcode форматы) ====================
+function toggleScanner() {
+  if (isScanning) {
+    stopScanner();
+  } else {
+    startScanner();
   }
+}
 
-  // ==================== ПОИСК ПО QR ====================
-  function findPartByQR(qrData) {
-    let cleanCode = qrData;
-    if (qrData.includes('/')) cleanCode = qrData.split('/').pop();
-    if (partsDB[cleanCode]) return partsDB[cleanCode];
-    for (const [code, part] of Object.entries(partsDB)) {
-      if (cleanCode.includes(code) || code.includes(cleanCode)) return part;
-    }
-    return null;
-  }
+function startScanner() {
+  if (isScanning) return;
+  document.getElementById("scanResult").style.display = "none";
 
-  function processScannedCode(qrData) {
-    const resultDiv = document.getElementById("scan-result");
-    const part = findPartByQR(qrData);
-    let html = '';
-    if (part) {
-      html = `<div class="found-part"><strong>🔩 ${part.name}</strong><br>📌 ${part.sku}<br>🚗 ${part.compatible}<br>📦 ${part.stock}<br>💰 ${part.price}</div><div class="flex-row" style="margin-top:12px;"><button id="addNoteFromScan" class="btn btn-success btn-sm">📝 Добавить в заметки</button></div>`;
-      addToHistory(qrData, part.name);
-      showToast(`✅ Найдено: ${part.name}`);
-    } else {
-      html = `<div class="not-found">⚠️ Деталь не найдена<br>Код: ${qrData}</div><div class="flex-row" style="margin-top:12px;"><button id="addCodeToNotes" class="btn btn-outline btn-sm">📝 Сохранить код в заметки</button></div>`;
-      addToHistory(qrData, "Неизвестная деталь");
-      showToast(`⚠️ Деталь не найдена`);
-    }
-    resultDiv.innerHTML = html;
-    resultDiv.style.display = "block";
-    document.getElementById("addNoteFromScan")?.addEventListener("click", () => addNote(`🔧 ${part.name} (${part.sku})`));
-    document.getElementById("addCodeToNotes")?.addEventListener("click", () => addNote(`QR-код: ${qrData}`));
-  }
+  html5QrCode = new Html5Qrcode("qr-reader");
 
-  // ==================== QR СКАНЕР ====================
-  function startScanner() {
-    if (isScanning) { showToast("Сканер уже работает"); return; }
-    const resultDiv = document.getElementById("scan-result");
-    resultDiv.style.display = "none";
-    resultDiv.innerHTML = "";
-    html5QrCode = new Html5Qrcode("qr-reader");
-    html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: { width: 250, height: 250 } },
-      (decodedText) => { if (isScanning) { processScannedCode(decodedText); stopScanner(); } },
-      () => {}
-    ).then(() => { isScanning = true; showToast("📷 Сканер запущен"); })
-     .catch(() => showToast("❌ Ошибка камеры"));
-  }
+  const formats = [
+    Html5QrcodeSupportedFormats.QR_CODE,
+    Html5QrcodeSupportedFormats.CODE_128,
+    Html5QrcodeSupportedFormats.CODE_39,
+    Html5QrcodeSupportedFormats.EAN_13,
+    Html5QrcodeSupportedFormats.EAN_8,
+    Html5QrcodeSupportedFormats.UPC_A,
+    Html5QrcodeSupportedFormats.UPC_E,
+    Html5QrcodeSupportedFormats.ITF,
+    Html5QrcodeSupportedFormats.DATA_MATRIX
+  ];
 
-  function stopScanner() {
-    if (html5QrCode && isScanning) { html5QrCode.stop().then(() => { isScanning = false; showToast("Сканер остановлен"); }).catch(()=>{}); }
-  }
-
-  function manualInput() { const code = prompt("Введите код детали:", "A0940427401"); if (code?.trim()) processScannedCode(code.trim()); }
-  function testQR(code) { processScannedCode(code); }
-
-  // ==================== ГОЛОС (ТЕКСТ + ДАТА) ====================
-  function initVoice() {
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SpeechRecognition) { 
-      const btn = document.getElementById("voiceNoteBtn"); 
-      if(btn){ btn.disabled=true; btn.textContent="❌ Голос не поддерживается"; } 
-      return; 
-    }
-    recognition = new SpeechRecognition();
-    recognition.lang = "ru-RU";
-    recognition.continuous = false;
-    recognition.interimResults = false;
-    
-    recognition.onstart = () => { 
-      isRecording = true; 
-      const btn = document.getElementById("voiceNoteBtn"); 
-      btn.classList.add("recording"); 
-      if (pendingVoiceText) btn.textContent = "🎙️ Скажите дату...";
-      else btn.textContent = "🎙️ Скажите текст заметки...";
-    };
-    
-    recognition.onend = () => { 
-      isRecording = false; 
-      const btn = document.getElementById("voiceNoteBtn"); 
-      btn.classList.remove("recording"); 
-      if (!pendingVoiceText) btn.textContent = "🎤 Голосом (текст+дата)";
-    };
-    
-    recognition.onerror = () => { 
-      isRecording = false; 
-      pendingVoiceText = null;
-      const btn = document.getElementById("voiceNoteBtn"); 
-      btn.classList.remove("recording"); 
-      btn.textContent = "🎤 Ошибка";
-      setTimeout(() => { if (btn.textContent === "🎤 Ошибка") btn.textContent = "🎤 Голосом (текст+дата)"; }, 1500);
-    };
-    
-    recognition.onresult = (event) => {
-      const text = event.results[0][0].transcript;
-      if (!text?.trim()) {
-        pendingVoiceText = null;
-        return;
+  html5QrCode.start(
+    { facingMode: "environment" },
+    {
+      fps: 12,
+      qrbox: { width: 280, height: 110 }, // прямоугольник для штрих-кодов
+      formatsToSupport: formats
+    },
+    (decodedText) => {
+      if (isScanning) {
+        processScannedCode(decodedText);
+        stopScanner();
       }
-      
-      // Если ждём дату
-      if (pendingVoiceText !== null) {
-        const dueDate = parseDateFromVoice(text);
-        addNote(pendingVoiceText, dueDate);
-        pendingVoiceText = null;
-        showToast(dueDate ? "✅ Заметка добавлена с датой" : "✅ Заметка добавлена без даты");
-      } else {
-        // Первый этап: получили текст заметки, теперь спрашиваем дату
-        pendingVoiceText = text;
-        showToast("📅 Теперь скажите дату выполнения (например, 'завтра' или '25 декабря')");
-        // Перезапускаем распознавание для даты
-        setTimeout(() => {
-          if (pendingVoiceText) recognition.start();
-        }, 500);
-      }
-    };
-  }
-
-  function startVoiceNote() {
-    if (!recognition) { alert("Голос не поддерживается"); return; }
-    if (isRecording) {
-      recognition.stop();
-    } else {
-      pendingVoiceText = null;
-      recognition.start();
-    }
-  }
-
-  // ==================== ВСПОМОГАТЕЛЬНЫЕ ====================
-  function escapeHtml(str) { return String(str).replace(/[&<>]/g, m => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;' }[m])); }
-  function formatDate(dateStr) { const date = new Date(dateStr); return date.toLocaleString('ru-RU', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' }); }
-  function showToast(msg) { 
-    const toast = document.createElement('div'); 
-    toast.textContent = msg; 
-    toast.style.cssText = 'position:fixed; bottom:80px; left:50%; transform:translateX(-50%); background:#333; color:white; padding:8px 16px; border-radius:20px; font-size:12px; z-index:1000;'; 
-    document.body.appendChild(toast); 
-    setTimeout(() => toast.remove(), 2500); 
-  }
-
-  // ==================== НАВИГАЦИЯ ====================
-  function switchTab(tabId) {
-    document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
-    document.getElementById(`tab-${tabId}`).classList.add('active');
-    document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
-    document.querySelector(`.nav-btn[data-tab="${tabId}"]`).classList.add('active');
-  }
-
-  // ==================== ЗАПУСК ====================
-  document.addEventListener("DOMContentLoaded", () => {
-    loadData();
-    initVoice();
-    document.querySelectorAll('.nav-btn').forEach(btn => btn.addEventListener('click', () => switchTab(btn.dataset.tab)));
-    document.querySelectorAll('.filter-btn').forEach(btn => btn.addEventListener('click', () => { 
-      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active')); 
-      btn.classList.add('active'); 
-      currentFilter = btn.dataset.filter; 
-      renderNotes(); 
-    }));
-    document.getElementById("startScannerBtn")?.addEventListener("click", startScanner);
-    document.getElementById("stopScannerBtn")?.addEventListener("click", stopScanner);
-    document.getElementById("manualInputBtn")?.addEventListener("click", manualInput);
-    document.getElementById("voiceNoteBtn")?.addEventListener("click", startVoiceNote);
-    document.getElementById("clearHistoryBtn")?.addEventListener("click", clearHistory);
-    document.getElementById("exportDataBtn")?.addEventListener("click", exportData);
-    document.querySelectorAll('.test-btn').forEach(btn => btn.addEventListener('click', () => testQR(btn.dataset.code)));
-    if (notes.length === 0) setTimeout(() => { if (notes.length === 0) addNote("🔧 Заменить масло через 5000 км"); }, 500);
+    },
+    () => {} // ошибки сканирования — молча игнорируем
+  ).then(() => {
+    isScanning = true;
+    setScanStatus("active", "📡 Наведите на QR-код или штрих-код");
+    const btn = document.getElementById("toggleScanBtn");
+    btn.textContent = "⏹ Остановить сканер";
+    btn.classList.add("scanning");
+    showToast("📷 Сканер запущен");
+  }).catch((err) => {
+    showToast("❌ Нет доступа к камере");
+    console.error(err);
   });
+}
+
+function stopScanner() {
+  if (!html5QrCode || !isScanning) return;
+  html5QrCode.stop().then(() => {
+    html5QrCode.clear();
+    isScanning = false;
+    setScanStatus("", "Нажмите «Запустить» для сканирования");
+    const btn = document.getElementById("toggleScanBtn");
+    btn.textContent = "▶ Запустить сканер";
+    btn.classList.remove("scanning");
+  }).catch(() => {});
+}
+
+function setScanStatus(cls, text) {
+  const el = document.getElementById("scanStatus");
+  el.textContent = text;
+  el.className = "scan-status" + (cls ? " " + cls : "");
+}
+
+function manualInput() {
+  const code = prompt("Введите артикул детали:", "");
+  if (code?.trim()) processScannedCode(code.trim());
+}
+
+// ==================== ГОЛОСОВЫЕ ЗАМЕТКИ (FIX: hint + error reset) ====================
+function setVoiceHint(text) {
+  const el = document.getElementById("voiceHint");
+  if (el) el.textContent = text;
+}
+
+function initVoice() {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) {
+    const btn = document.getElementById("voiceNoteBtn");
+    if (btn) { btn.disabled = true; btn.textContent = "🎤 Голос не поддерживается"; }
+    return;
+  }
+
+  recognition = new SR();
+  recognition.lang = "ru-RU";
+  recognition.continuous = false;
+  recognition.interimResults = false;
+
+  recognition.onstart = () => {
+    isRecording = true;
+    const btn = document.getElementById("voiceNoteBtn");
+    btn.classList.add("recording");
+    btn.textContent = "🎙️ Слушаю...";
+    setVoiceHint(pendingVoiceText ? "📅 Скажите дату: «завтра», «через 3 дня»..." : "🗣️ Скажите текст заметки...");
+  };
+
+  recognition.onend = () => {
+    isRecording = false;
+    const btn = document.getElementById("voiceNoteBtn");
+    btn.classList.remove("recording");
+    btn.textContent = "🎤 Добавить голосом";
+    if (!pendingVoiceText) setVoiceHint("");
+  };
+
+  recognition.onerror = (e) => {
+    isRecording = false;
+    pendingVoiceText = null;
+    const btn = document.getElementById("voiceNoteBtn");
+    btn.classList.remove("recording");
+    btn.textContent = "🎤 Добавить голосом";
+    setVoiceHint("");
+    if (e.error !== "aborted") showToast("❌ Ошибка микрофона: " + e.error);
+  };
+
+  recognition.onresult = (event) => {
+    const text = event.results[0][0].transcript?.trim();
+    if (!text) { pendingVoiceText = null; return; }
+
+    if (pendingVoiceText !== null) {
+      // Второй этап — дата
+      const dueDate = parseDateFromVoice(text);
+      addNote(pendingVoiceText, dueDate);
+      pendingVoiceText = null;
+      setVoiceHint("");
+    } else {
+      // Первый этап — текст заметки
+      pendingVoiceText = text;
+      setVoiceHint("📅 Теперь скажите дату (или нажмите кнопку снова чтобы без даты)");
+      showToast("📝 Записано: «" + text.slice(0,30) + "...» — теперь скажите дату");
+      setTimeout(() => {
+        if (pendingVoiceText) recognition.start();
+      }, 600);
+    }
+  };
+}
+
+function startVoiceNote() {
+  if (!recognition) { alert("Голосовой ввод не поддерживается в этом браузере"); return; }
+  if (isRecording) {
+    recognition.stop();
+    return;
+  }
+  // Если ждём дату и нажали снова — сохраняем без даты
+  if (pendingVoiceText) {
+    addNote(pendingVoiceText);
+    pendingVoiceText = null;
+    setVoiceHint("");
+    showToast("✅ Сохранено без даты");
+    return;
+  }
+  recognition.start();
+}
+
+// ==================== ВСПОМОГАТЕЛЬНЫЕ ====================
+function escapeHtml(str) {
+  return String(str).replace(/[&<>"']/g, m => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]));
+}
+
+function formatDate(dateStr) {
+  return new Date(dateStr).toLocaleString("ru-RU", { day:"2-digit", month:"2-digit", hour:"2-digit", minute:"2-digit" });
+}
+
+function formatDateShort(date) {
+  return new Date(date).toLocaleDateString("ru-RU", { day:"2-digit", month:"2-digit" });
+}
+
+let toastTimer = null;
+function showToast(msg) {
+  let toast = document.getElementById("appToast");
+  if (!toast) { toast = document.createElement("div"); toast.id = "appToast"; toast.className = "toast"; document.body.appendChild(toast); }
+  toast.textContent = msg;
+  toast.style.opacity = "1";
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { toast.style.opacity = "0"; }, 2500);
+}
+
+function switchTab(tabId) {
+  document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+  document.getElementById("tab-" + tabId).classList.add("active");
+  document.querySelectorAll(".nav-btn").forEach(b => b.classList.remove("active"));
+  document.querySelector(`.nav-btn[data-tab="${tabId}"]`).classList.add("active");
+  if (tabId !== "scan" && isScanning) stopScanner();
+}
+
+// ==================== ИНИЦИАЛИЗАЦИЯ ====================
+function initApp() {
+  console.log("🚀 Инициализация AutoQR...");
+  loadData();
+  initVoice();
+
+  // Навигация
+  document.querySelectorAll(".nav-btn").forEach(btn =>
+    btn.addEventListener("click", () => switchTab(btn.dataset.tab)));
+
+  // Фильтры
+  document.querySelectorAll(".filter-btn").forEach(btn =>
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".filter-btn").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      currentFilter = btn.dataset.filter;
+      renderNotes();
+    }));
+
+  // Сканер
+  const toggleBtn = document.getElementById("toggleScanBtn");
+  if (toggleBtn) {
+    toggleBtn.addEventListener("click", () => {
+      console.log("✅ Клик по сканеру");
+      toggleScanner();
+    });
+  }
+
+  const manualBtn = document.getElementById("manualInputBtn");
+  if (manualBtn) {
+    manualBtn.addEventListener("click", () => {
+      console.log("✅ Клик по ручному вводу");
+      manualInput();
+    });
+  }
+
+  // Голос
+  const voiceBtn = document.getElementById("voiceNoteBtn");
+  if (voiceBtn) {
+    voiceBtn.addEventListener("click", startVoiceNote);
+  }
+
+  // Быстрое добавление текстом
+  const quickInput = document.getElementById("quickNoteInput");
+  const quickBtn   = document.getElementById("quickNoteBtn");
+  if (quickBtn) {
+    quickBtn.addEventListener("click", () => {
+      addNote(quickInput.value);
+      quickInput.value = "";
+    });
+  }
+  if (quickInput) {
+    quickInput.addEventListener("keydown", e => {
+      if (e.key === "Enter") { addNote(quickInput.value); quickInput.value = ""; }
+    });
+  }
+
+  // История
+  const clearBtn = document.getElementById("clearHistoryBtn");
+  if (clearBtn) {
+    clearBtn.addEventListener("click", clearHistory);
+  }
+  const exportBtn = document.getElementById("exportDataBtn");
+  if (exportBtn) {
+    exportBtn.addEventListener("click", exportData);
+  }
+
+  // Демо-коды
+  document.querySelectorAll(".test-btn").forEach(btn =>
+    btn.addEventListener("click", () => {
+      console.log("✅ Демо-код:", btn.dataset.code);
+      switchTab("scan");
+      processScannedCode(btn.dataset.code);
+    }));
+
+  // Демо-заметка при первом запуске
+  if (notes.length === 0) {
+    setTimeout(() => addNote("🔧 Заменить масло через 5000 км"), 300);
+  }
+  
+  console.log("✅ Инициализация завершена");
+}
+
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", initApp);
+} else {
+  initApp();
+}
+
+// Проверка, что скрипт загружен
+setTimeout(() => {
+  showToast("✅ AutoQR загружен. Проверь консоль браузера (F12)");
+}, 500);
 </script>
 </body>
 </html>
